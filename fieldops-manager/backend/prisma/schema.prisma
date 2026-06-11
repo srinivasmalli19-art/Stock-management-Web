@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  Admin
+  Store_Manager
+  Team_Leader
+  Engineer
+}
+
+enum ProductivityStatus {
+  Pending
+  Validated
+  Approved
+  Rejected
+}
+
+enum AttendanceStatus {
+  Present
+  Absent
+}
+
+enum StockRequestStatus {
+  Pending
+  Approved
+  Rejected
+  Revoke_Pending
+  Revoked
+}
+
+enum PurchaseStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum RevokeStatus {
+  Revoke_Pending
+  Revoked
+  Rejected
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(Engineer)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  engineerStock    EngineerStock[]
+  productivityLogs ProductivityLog[]
+  stockRequests    StockRequest[]
+  attendance       Attendance[]
+  refreshTokens    RefreshToken[]
+}
+
+model Sku {
+  id            String   @id
+  name          String
+  lowStockAlert Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  mainInventory    MainInventory?
+  engineerStock    EngineerStock[]
+  productivityItems ProductivityItem[]
+  stockRequests    StockRequest[]
+  purchaseInward   PurchaseInward[]
+}
+
+model MainInventory {
+  id        String   @id @default(cuid())
+  skuId     String   @unique
+  sku       Sku      @relation(fields: [skuId], references: [id])
+  qty       Int      @default(0)
+  unitPrice Float    @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model EngineerStock {
+  id         String   @id @default(cuid())
+  engineerId String
+  engineer   User     @relation(fields: [engineerId], references: [id])
+  skuId      String
+  sku        Sku      @relation(fields: [skuId], references: [id])
+  qty        Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([engineerId, skuId])
+}
+
+model ProductivityLog {
+  id          String             @id @default(cuid())
+  engineerId  String
+  engineer    User               @relation(fields: [engineerId], references: [id])
+  date        DateTime           @db.Date
+  callsClosed Int                @default(0)
+  status      ProductivityStatus @default(Pending)
+  tlNote      String?
+  adminNote   String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  items      ProductivityItem[]
+  attendance Attendance?
+
+  @@unique([engineerId, date])
+}
+
+model ProductivityItem {
+  id                String          @id @default(cuid())
+  productivityLogId String
+  log               ProductivityLog @relation(fields: [productivityLogId], references: [id], onDelete: Cascade)
+  skuId             String
+  sku               Sku             @relation(fields: [skuId], references: [id])
+  qty               Int
+  saleValue         Float           @default(0)
+  adminIncentive    Float?
+}
+
+model Attendance {
+  id                String           @id @default(cuid())
+  engineerId        String
+  engineer          User             @relation(fields: [engineerId], references: [id])
+  date              DateTime         @db.Date
+  status            AttendanceStatus @default(Present)
+  productivityLogId String?          @unique
+  log               ProductivityLog? @relation(fields: [productivityLogId], references: [id])
+
+  @@unique([engineerId, date])
+}
+
+model StockRequest {
+  id         String             @id @default(cuid())
+  engineerId String
+  engineer   User               @relation(fields: [engineerId], references: [id])
+  skuId      String
+  sku        Sku                @relation(fields: [skuId], references: [id])
+  qty        Int
+  status     StockRequestStatus @default(Pending)
+  note       String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  revokeRequest RevokeRequest?
+}
+
+model PurchaseInward {
+  id        String         @id @default(cuid())
+  skuId     String
+  sku       Sku            @relation(fields: [skuId], references: [id])
+  qty       Int
+  unitPrice Float
+  vendor    String
+  invoiceNo String
+  date      DateTime       @db.Date
+  status    PurchaseStatus @default(Pending)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model RevokeRequest {
+  id             String       @id @default(cuid())
+  stockRequestId String       @unique
+  stockRequest   StockRequest @relation(fields: [stockRequestId], references: [id])
+  engineerId     String
+  skuId          String
+  qty            Int
+  status         RevokeStatus @default(Revoke_Pending)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

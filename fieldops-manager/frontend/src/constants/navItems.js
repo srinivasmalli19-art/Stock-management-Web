@@ -1,0 +1,36 @@
+export const NAV_ITEMS = {
+  Admin: [
+    { section: "Workflows" },
+    { page: "/admin/approvals", icon: "ti-check-square", label: "Approval Queue" },
+    { page: "/admin/purchase-approvals", icon: "ti-package-import", label: "Purchase Approvals" },
+    { page: "/admin/revoke-approvals", icon: "ti-arrow-back-up", label: "Revoke Approvals" },
+    { section: "Reports" },
+    { page: "/admin/attendance", icon: "ti-calendar-check", label: "Attendance Register" },
+    { page: "/admin/inventory", icon: "ti-building-warehouse", label: "Store Inventory" },
+    { page: "/admin/pl-report", icon: "ti-chart-bar", label: "P&L Report" },
+    { section: "Settings" },
+    { page: "/admin/skus", icon: "ti-tag", label: "SKU Registry" },
+    { page: "/admin/users", icon: "ti-users", label: "User Registry" },
+  ],
+  Store_Manager: [
+    { section: "Operations" },
+    { page: "/store/dashboard", icon: "ti-layout-dashboard", label: "Store Dashboard" },
+    { page: "/store/inward", icon: "ti-package-import", label: "Purchase Inward" },
+    { page: "/store/requests", icon: "ti-shopping-cart", label: "Stock Requests" },
+    { section: "Reports" },
+    { page: "/store/inventory", icon: "ti-clipboard-list", label: "Inventory Report" },
+  ],
+  Team_Leader: [
+    { section: "Team" },
+    { page: "/tl/dashboard", icon: "ti-layout-dashboard", label: "Team Dashboard" },
+    { page: "/tl/approvals", icon: "ti-check-square", label: "Validation Queue" },
+  ],
+  Engineer: [
+    { section: "My Work" },
+    { page: "/engineer/dashboard", icon: "ti-layout-dashboard", label: "My Dashboard" },
+    { page: "/engineer/productivity", icon: "ti-clipboard-check", label: "Log Productivity" },
+    { page: "/engineer/status", icon: "ti-calendar-stats", label: "Approval Status" },
+    { section: "Inventory" },
+    { page: "/engineer/stock", icon: "ti-package", label: "My Van Stock" },
+  ],
+};

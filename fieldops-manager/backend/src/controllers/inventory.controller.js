@@ -1,0 +1,72 @@
+const prisma = require("../config/db");
+const { success, error } = require("../utils/responseHelper");
+const asyncHandler = require("../utils/asyncHandler");
+const { Parser } = require("json2csv");
+
+const getMainInventory = asyncHandler(async (req, res) => {
+  const items = await prisma.mainInventory.findMany({
+    include: { sku: { select: { id: true, name: true, lowStockAlert: true } } },
+    orderBy: { skuId: "asc" },
+  });
+
+  const result = items.map((item) => ({
+    skuId: item.skuId,
+    skuName: item.sku.name,
+    qty: item.qty,
+    unitPrice: item.unitPrice,
+    totalValue: item.qty * item.unitPrice,
+    lowStockAlert: item.sku.lowStockAlert,
+    isLowStock: item.qty <= item.sku.lowStockAlert,
+    updatedAt: item.updatedAt,
+  }));
+
+  return success(res, result);
+});
+
+const getEngineerStock = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const stock = await prisma.engineerStock.findMany({
+    where: { engineerId: id },
+    include: { sku: { select: { id: true, name: true } } },
+    orderBy: { skuId: "asc" },
+  });
+
+  return success(res, stock);
+});
+
+const getMyStock = asyncHandler(async (req, res) => {
+  const stock = await prisma.engineerStock.findMany({
+    where: { engineerId: req.user.id },
+    include: { sku: { select: { id: true, name: true } } },
+    orderBy: { skuId: "asc" },
+  });
+
+  return success(res, stock);
+});
+
+const downloadInventoryCsv = asyncHandler(async (req, res) => {
+  const items = await prisma.mainInventory.findMany({
+    include: { sku: { select: { id: true, name: true, lowStockAlert: true } } },
+    orderBy: { skuId: "asc" },
+  });
+
+  const rows = items.map((item) => ({
+    "SKU ID": item.skuId,
+    "Item Name": item.sku.name,
+    "Available Qty": item.qty,
+    "Unit Price": item.unitPrice,
+    "Total Value": item.qty * item.unitPrice,
+    "Alert Threshold": item.sku.lowStockAlert,
+    Status: item.qty <= item.sku.lowStockAlert ? "Low" : "OK",
+  }));
+
+  const parser = new Parser({ fields: Object.keys(rows[0] || {}) });
+  const csv = parser.parse(rows);
+
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", `attachment; filename="inventory_report.csv"`);
+  res.send(csv);
+});
+
+module.exports = { getMainInventory, getEngineerStock, getMyStock, downloadInventoryCsv };
