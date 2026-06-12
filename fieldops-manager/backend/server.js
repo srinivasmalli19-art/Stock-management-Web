@@ -24,14 +24,21 @@ const dashboardRoutes = require("./src/routes/dashboard.routes");
 const app = express();
 
 app.use(helmet());
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: [
+    "https://fieldops-manager.onrender.com"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization"
+  ],
+};
 
-app.options("*",cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 app.use(compression());
 app.use(express.json());
 app.use(cookieParser());
