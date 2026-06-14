@@ -1,0 +1,76 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+**/node_modules/
+
+# ── Build outputs ──────────────────────────────────────────────────────────────
+dist/
+build/
+**/dist/
+**/build/
+.vite/
+
+# ── Environment & Secrets (NEVER commit these) ─────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+!.env.example
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Editors ───────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Testing & Coverage ────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+*.lcov
+
+# ── Temporary files ───────────────────────────────────────────────────────────
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+.cache/
+tmp/
+temp/
+
+# ── Prisma ────────────────────────────────────────────────────────────────────
+*.db
+*.db-journal
+*.sqlite
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.docker/
+
+# ── Exports / Reports ─────────────────────────────────────────────────────────
+exports/
+reports/
+screenshots/
