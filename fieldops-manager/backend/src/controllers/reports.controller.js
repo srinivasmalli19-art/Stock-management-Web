@@ -3,6 +3,31 @@ const { success } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { Parser } = require("json2csv");
 
+// Build WAVCO (Weighted Average Cost) per SKU from all approved purchases.
+// Returns a map: { skuId: weightedAvgUnitPrice }
+// Falls back to MainInventory.unitPrice for SKUs with no purchase history.
+async function buildWeightedAvgCost() {
+  const purchases = await prisma.purchaseInward.findMany({
+    where: { status: "Approved" },
+    select: { skuId: true, qty: true, unitPrice: true },
+  });
+
+  const totalQty = {};
+  const totalCost = {};
+
+  purchases.forEach(({ skuId, qty, unitPrice }) => {
+    if (!totalQty[skuId]) { totalQty[skuId] = 0; totalCost[skuId] = 0; }
+    totalQty[skuId] += qty;
+    totalCost[skuId] += qty * unitPrice;
+  });
+
+  const wavco = {};
+  Object.keys(totalQty).forEach((skuId) => {
+    wavco[skuId] = totalQty[skuId] > 0 ? totalCost[skuId] / totalQty[skuId] : 0;
+  });
+  return wavco;
+}
+
 const getPLReport = asyncHandler(async (req, res) => {
   const { month } = req.query;
   const monthStr = month || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
@@ -11,10 +36,10 @@ const getPLReport = asyncHandler(async (req, res) => {
   const end = new Date(start);
   end.setMonth(end.getMonth() + 1);
 
-  const engineers = await prisma.user.findMany({
-    where: { role: "Engineer", isActive: true },
-    orderBy: { name: "asc" },
-  });
+  const [engineers, wavco] = await Promise.all([
+    prisma.user.findMany({ where: { role: "Engineer", isActive: true }, orderBy: { name: "asc" } }),
+    buildWeightedAvgCost(),
+  ]);
 
   const engineerData = await Promise.all(
     engineers.map(async (eng) => {
@@ -31,7 +56,8 @@ const getPLReport = asyncHandler(async (req, res) => {
         log.items.forEach((item) => {
           revenue += item.saleValue;
           incentive += item.adminIncentive || 0;
-          const unitPrice = item.sku?.mainInventory?.unitPrice || 0;
+          // WAVCO: use weighted average if purchase history exists, else fall back to current unit price
+          const unitPrice = wavco[item.skuId] ?? item.sku?.mainInventory?.unitPrice ?? 0;
           accessoriesCost += item.qty * unitPrice;
         });
       });
@@ -60,7 +86,7 @@ const getPLReport = asyncHandler(async (req, res) => {
     { revenue: 0, incentive: 0, accessoriesCost: 0, pl: 0 }
   );
 
-  return success(res, { engineers: engineerData, totals, month: monthStr });
+  return success(res, { engineers: engineerData, totals, month: monthStr, costMethod: "WAVCO" });
 });
 
 const downloadPLCsv = asyncHandler(async (req, res) => {
@@ -71,7 +97,10 @@ const downloadPLCsv = asyncHandler(async (req, res) => {
   const end = new Date(start);
   end.setMonth(end.getMonth() + 1);
 
-  const engineers = await prisma.user.findMany({ where: { role: "Engineer", isActive: true }, orderBy: { name: "asc" } });
+  const [engineers, wavco] = await Promise.all([
+    prisma.user.findMany({ where: { role: "Engineer", isActive: true }, orderBy: { name: "asc" } }),
+    buildWeightedAvgCost(),
+  ]);
 
   const rows = await Promise.all(
     engineers.map(async (eng) => {
@@ -85,15 +114,22 @@ const downloadPLCsv = asyncHandler(async (req, res) => {
         log.items.forEach((item) => {
           revenue += item.saleValue;
           incentive += item.adminIncentive || 0;
-          accessoriesCost += item.qty * (item.sku?.mainInventory?.unitPrice || 0);
+          const unitPrice = wavco[item.skuId] ?? item.sku?.mainInventory?.unitPrice ?? 0;
+          accessoriesCost += item.qty * unitPrice;
         });
       });
 
-      return { Engineer: eng.name, Revenue: revenue, Incentive: incentive, "Accessories Cost": accessoriesCost, "P&L": revenue - incentive - accessoriesCost };
+      return {
+        Engineer: eng.name,
+        Revenue: revenue,
+        Incentive: incentive,
+        "Accessories Cost (WAVCO)": accessoriesCost,
+        "P&L": revenue - incentive - accessoriesCost,
+      };
     })
   );
 
-  const parser = new Parser({ fields: ["Engineer", "Revenue", "Incentive", "Accessories Cost", "P&L"] });
+  const parser = new Parser({ fields: ["Engineer", "Revenue", "Incentive", "Accessories Cost (WAVCO)", "P&L"] });
   const csv = parser.parse(rows);
 
   res.setHeader("Content-Type", "text/csv");

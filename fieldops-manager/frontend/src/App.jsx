@@ -9,6 +9,7 @@ import EngDashboard from "./pages/engineer/EngDashboard";
 import EngProductivity from "./pages/engineer/EngProductivity";
 import EngApprovalStatus from "./pages/engineer/EngApprovalStatus";
 import EngVanStock from "./pages/engineer/EngVanStock";
+import EngLPRequests from "./pages/engineer/EngLPRequests";
 
 // Team Leader
 import TLDashboard from "./pages/teamleader/TLDashboard";
@@ -50,6 +51,7 @@ export default function App() {
             <Route path="/engineer/productivity" element={<EngProductivity />} />
             <Route path="/engineer/status" element={<EngApprovalStatus />} />
             <Route path="/engineer/stock" element={<EngVanStock />} />
+            <Route path="/engineer/lp-requests" element={<EngLPRequests />} />
 
             {/* Team Leader */}
             <Route path="/tl/dashboard" element={<TLDashboard />} />

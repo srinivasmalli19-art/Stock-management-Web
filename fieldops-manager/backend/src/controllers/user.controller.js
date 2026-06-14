@@ -79,4 +79,14 @@ const getUserEngineers = asyncHandler(async (req, res) => {
   return success(res, engineers.map(safeUser));
 });
 
-module.exports = { getMe, getUsers, createUser, updateUser, resetPassword, updateStatus, getUserEngineers };
+// Available to any authenticated user — Engineers need this to pick their TL when submitting LP requests
+const getTeamLeaders = asyncHandler(async (req, res) => {
+  const tls = await prisma.user.findMany({
+    where: { role: "Team_Leader", isActive: true },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+  });
+  return success(res, tls);
+});
+
+module.exports = { getMe, getUsers, createUser, updateUser, resetPassword, updateStatus, getUserEngineers, getTeamLeaders };

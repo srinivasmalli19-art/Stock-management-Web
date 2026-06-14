@@ -13,6 +13,8 @@ const createSchema = Joi.object({
   spareCost: Joi.number().min(0).required(),
   serviceCost: Joi.number().min(0).required(),
   date: Joi.string().isoDate().required(),
+  // Required when Engineer submits; omitted when TL creates their own
+  tlEmail: Joi.string().email().optional().allow("", null),
 });
 
 const updateSchema = Joi.object({
@@ -20,8 +22,11 @@ const updateSchema = Joi.object({
   note: Joi.string().allow("", null).optional(),
 });
 
-router.get("/", authorize("Team_Leader", "Store_Manager", "Admin"), getLpRequests);
-router.post("/", authorize("Team_Leader"), validate(createSchema), createLpRequest);
-router.patch("/:id/status", authorize("Store_Manager", "Admin"), validate(updateSchema), updateLpStatus);
+// GET: all four roles can fetch (each sees their scoped set)
+router.get("/", authorize("Engineer", "Team_Leader", "Store_Manager", "Admin"), getLpRequests);
+// POST: both Engineer and TL can create LP requests
+router.post("/", authorize("Engineer", "Team_Leader"), validate(createSchema), createLpRequest);
+// PATCH: TL reviews engineer requests; Store and Admin advance the claim pipeline
+router.patch("/:id/status", authorize("Team_Leader", "Store_Manager", "Admin"), validate(updateSchema), updateLpStatus);
 
 module.exports = router;

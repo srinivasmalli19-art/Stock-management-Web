@@ -1,6 +1,6 @@
 const express = require("express");
 const Joi = require("joi");
-const { getMe, getUsers, createUser, updateUser, resetPassword, updateStatus } = require("../controllers/user.controller");
+const { getMe, getUsers, createUser, updateUser, resetPassword, updateStatus, getTeamLeaders } = require("../controllers/user.controller");
 const authenticate = require("../middlewares/authenticate");
 const authorize = require("../middlewares/authorize");
 const validate = require("../middlewares/validate");
@@ -24,6 +24,7 @@ const pwSchema = Joi.object({ password: Joi.string().min(4).required() });
 const statusSchema = Joi.object({ isActive: Joi.boolean().required() });
 
 router.get("/me", getMe);
+router.get("/team-leaders", getTeamLeaders);
 router.get("/", authorize("Admin"), getUsers);
 router.post("/", authorize("Admin"), validate(createSchema), createUser);
 router.put("/:id", authorize("Admin"), validate(updateSchema), updateUser);

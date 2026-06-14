@@ -22,6 +22,7 @@ const PAGE_TITLES = {
   "/engineer/productivity": "Log Productivity",
   "/engineer/status": "Approval Status",
   "/engineer/stock": "My Van Stock",
+  "/engineer/lp-requests": "My LP Requests",
 };
 
 export default function Topbar({ onMenuClick }) {
