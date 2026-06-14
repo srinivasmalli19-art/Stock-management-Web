@@ -4,10 +4,12 @@ const { generateAccessToken, generateRefreshToken, verifyRefreshToken, getRefres
 const { success, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 
+// sameSite "none" required for cross-domain cookie (frontend and backend on different domains)
+// secure must be true when sameSite is "none"
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: "/",
 };

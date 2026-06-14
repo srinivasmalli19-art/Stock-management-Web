@@ -25,16 +25,33 @@ const lpRequestRoutes = require("./src/routes/lpRequest.routes");
 const app = express();
 
 app.use(helmet());
+
+// Build allowed origins from FRONTEND_URL env var (comma-separated for multiple origins)
+// e.g. FRONTEND_URL=https://logitask.in,https://www.logitask.in
+const getAllowedOrigins = () => {
+  const devOrigins = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"];
+  const envOrigins = (process.env.FRONTEND_URL || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return [...devOrigins, ...envOrigins];
+};
+
 const corsOptions = {
-  origin: [
-    "https://fieldops-manager.onrender.com"
-  ],
+  origin: (origin, callback) => {
+    // Allow server-to-server requests (no origin) and explicitly listed origins
+    if (!origin) return callback(null, true);
+    const allowed = getAllowedOrigins();
+    if (allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      logger.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error(`Origin '${origin}' not allowed by CORS policy`));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization"
-  ],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));

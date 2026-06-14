@@ -42,6 +42,43 @@ jobs:
       - name: Deploy to S3
         run: aws s3 sync dist/ s3://${{ secrets.AWS_S3_BUCKET }} --delete
 
+      - name: Configure CloudFront SPA routing (404/403 → index.html)
+        run: |
+          # Get current distribution config and ETag
+          DIST_CONFIG=$(aws cloudfront get-distribution-config \
+            --id ${{ secrets.AWS_CLOUDFRONT_DIST_ID }})
+          ETAG=$(echo "$DIST_CONFIG" | python3 -c "import sys,json; print(json.load(sys.stdin)['ETag'])")
+
+          # Inject custom error responses for SPA routing
+          echo "$DIST_CONFIG" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          config = data['DistributionConfig']
+          config['CustomErrorResponses'] = {
+            'Quantity': 2,
+            'Items': [
+              {
+                'ErrorCode': 404,
+                'ResponsePagePath': '/index.html',
+                'ResponseCode': '200',
+                'ErrorCachingMinTTL': 10
+              },
+              {
+                'ErrorCode': 403,
+                'ResponsePagePath': '/index.html',
+                'ResponseCode': '200',
+                'ErrorCachingMinTTL': 10
+              }
+            ]
+          }
+          print(json.dumps(config))
+          " > /tmp/updated-dist-config.json
+
+          aws cloudfront update-distribution \
+            --id ${{ secrets.AWS_CLOUDFRONT_DIST_ID }} \
+            --distribution-config file:///tmp/updated-dist-config.json \
+            --if-match "$ETAG"
+
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
