@@ -23,6 +23,10 @@ export const statusBadgeClass = (status) => {
     Revoke_Pending: "bg-purple-50 text-purple-900 border border-purple-200",
     Revoked: "bg-gray-100 text-gray-700 border border-gray-200",
     OK: "bg-green-50 text-green-900 border border-green-200",
+    Claim_Pending: "bg-blue-50 text-blue-900 border border-blue-200",
+    Claim_Submitted: "bg-indigo-50 text-indigo-900 border border-indigo-200",
+    Claim_Forwarded: "bg-purple-50 text-purple-900 border border-purple-200",
+    Claim_Approved: "bg-green-50 text-green-900 border border-green-200",
   };
   return map[status] || "bg-gray-100 text-gray-700 border border-gray-200";
 };

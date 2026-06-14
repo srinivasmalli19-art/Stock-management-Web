@@ -4,6 +4,7 @@ export const NAV_ITEMS = {
     { page: "/admin/approvals", icon: "ti-check-square", label: "Approval Queue" },
     { page: "/admin/purchase-approvals", icon: "ti-package-import", label: "Purchase Approvals" },
     { page: "/admin/revoke-approvals", icon: "ti-arrow-back-up", label: "Revoke Approvals" },
+    { page: "/admin/lp-approvals", icon: "ti-file-invoice", label: "LP Approvals" },
     { section: "Reports" },
     { page: "/admin/attendance", icon: "ti-calendar-check", label: "Attendance Register" },
     { page: "/admin/inventory", icon: "ti-building-warehouse", label: "Store Inventory" },
@@ -17,6 +18,7 @@ export const NAV_ITEMS = {
     { page: "/store/dashboard", icon: "ti-layout-dashboard", label: "Store Dashboard" },
     { page: "/store/inward", icon: "ti-package-import", label: "Purchase Inward" },
     { page: "/store/requests", icon: "ti-shopping-cart", label: "Stock Requests" },
+    { page: "/store/lp-requests", icon: "ti-file-invoice", label: "LP Requests" },
     { section: "Reports" },
     { page: "/store/inventory", icon: "ti-clipboard-list", label: "Inventory Report" },
   ],
@@ -24,6 +26,7 @@ export const NAV_ITEMS = {
     { section: "Team" },
     { page: "/tl/dashboard", icon: "ti-layout-dashboard", label: "Team Dashboard" },
     { page: "/tl/approvals", icon: "ti-check-square", label: "Validation Queue" },
+    { page: "/tl/lp-requests", icon: "ti-file-invoice", label: "LP Requests" },
   ],
   Engineer: [
     { section: "My Work" },

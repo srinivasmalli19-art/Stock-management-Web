@@ -46,6 +46,15 @@ enum RevokeStatus {
   Rejected
 }
 
+enum LpStatus {
+  Pending
+  Claim_Pending
+  Claim_Submitted
+  Claim_Forwarded
+  Claim_Approved
+  Rejected
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -178,6 +187,19 @@ model RevokeRequest {
   status         RevokeStatus @default(Revoke_Pending)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+}
+
+model LpRequest {
+  id          String   @id @default(cuid())
+  jobId       String
+  spareCost   Float    @default(0)
+  serviceCost Float    @default(0)
+  tlEmail     String
+  date        DateTime @db.Date
+  status      LpStatus @default(Pending)
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model RefreshToken {

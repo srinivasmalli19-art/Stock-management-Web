@@ -20,6 +20,7 @@ const attendanceRoutes = require("./src/routes/attendance.routes");
 const inventoryRoutes = require("./src/routes/inventory.routes");
 const reportsRoutes = require("./src/routes/reports.routes");
 const dashboardRoutes = require("./src/routes/dashboard.routes");
+const lpRequestRoutes = require("./src/routes/lpRequest.routes");
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/lp-requests", lpRequestRoutes);
 
 app.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
 
