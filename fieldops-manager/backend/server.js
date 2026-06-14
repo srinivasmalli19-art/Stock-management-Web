@@ -26,26 +26,28 @@ const app = express();
 
 app.use(helmet());
 
-// Build allowed origins from FRONTEND_URL env var (comma-separated for multiple origins)
-// e.g. FRONTEND_URL=https://logitask.in,https://www.logitask.in
+// Known production origins — always allowed regardless of env vars
+const PRODUCTION_ORIGINS = ["https://logitask.in", "https://www.logitask.in"];
+
+// Build allowed origins: hardcoded production + localhost dev + FRONTEND_URL env var (comma-separated)
+// FRONTEND_URL can hold extra origins: FRONTEND_URL=https://staging.logitask.in
 const getAllowedOrigins = () => {
   const devOrigins = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"];
   const envOrigins = (process.env.FRONTEND_URL || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  return [...devOrigins, ...envOrigins];
+  return [...PRODUCTION_ORIGINS, ...devOrigins, ...envOrigins];
 };
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow server-to-server requests (no origin) and explicitly listed origins
     if (!origin) return callback(null, true);
     const allowed = getAllowedOrigins();
     if (allowed.includes(origin)) {
       callback(null, true);
     } else {
-      logger.warn(`CORS blocked origin: ${origin}`);
+      logger.warn(`CORS blocked: ${origin} | allowed: ${allowed.join(", ")}`);
       callback(new Error(`Origin '${origin}' not allowed by CORS policy`));
     }
   },
@@ -56,6 +58,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
+logger.info(`CORS allowed origins: ${getAllowedOrigins().join(", ")}`);
 
 app.use(compression());
 app.use(express.json());
@@ -75,7 +78,14 @@ app.use("/api/reports", reportsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/lp-requests", lpRequestRoutes);
 
-app.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
+app.get("/health", (req, res) =>
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || "development",
+    corsOrigins: getAllowedOrigins(),
+  })
+);
 
 app.use(errorHandler);
 
