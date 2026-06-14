@@ -1,7 +1,15 @@
 export const formatDate = (d) => {
   if (!d) return "—";
-  const dt = new Date(d);
-  return dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  // Parse ISO date strings (YYYY-MM-DD) as local time to avoid UTC timezone shift
+  if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    const [y, m, day] = d.split("-").map(Number);
+    return new Date(y, m - 1, day).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+  return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 };
 
 export const formatCurrency = (n) =>
@@ -11,6 +19,13 @@ export const formatMonth = (prefix) => {
   const [y, m] = prefix.split("-");
   const d = new Date(parseInt(y), parseInt(m) - 1, 1);
   return d.toLocaleString("en-IN", { month: "long", year: "numeric" });
+};
+
+export const genId = (prefix = "ID") => {
+  const now = new Date();
+  const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const rand = Math.random().toString(36).slice(2, 5).toUpperCase();
+  return `${prefix}-${date}-${rand}`;
 };
 
 export const genPassword = (len = 10) => {

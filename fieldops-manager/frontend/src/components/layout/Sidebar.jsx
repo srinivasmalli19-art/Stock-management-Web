@@ -1,18 +1,34 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { NAV_ITEMS } from "../../constants/navItems";
 import { ROLE_LABELS } from "../../constants/roles";
 
-export default function Sidebar() {
+export default function Sidebar({ isMobileOpen, onClose }) {
   const { currentUser, logout } = useAuth();
   const items = NAV_ITEMS[currentUser?.role] || [];
 
   return (
-    <aside className="w-[220px] min-w-[220px] bg-sidebar flex flex-col h-screen overflow-y-auto">
+    <aside
+      className={`
+        fixed inset-y-0 left-0 z-30 w-[220px] bg-sidebar flex flex-col h-screen overflow-y-auto
+        transition-transform duration-300 ease-in-out
+        md:relative md:translate-x-0 md:z-auto md:shrink-0
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
+      `}
+    >
       <div className="px-4 pt-5 pb-3 border-b border-white/10">
-        <div className="flex items-center gap-2 text-white font-bold text-base">
-          <i className="ti ti-bolt text-sidebar-active text-xl" />
-          FieldOps
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-white font-bold text-base">
+            <i className="ti ti-bolt text-sidebar-active text-xl" />
+            FieldOps
+          </div>
+          <button
+            onClick={onClose}
+            className="md:hidden p-1 text-sidebar-text hover:text-white transition-colors cursor-pointer"
+            aria-label="Close menu"
+          >
+            <i className="ti ti-x text-lg" />
+          </button>
         </div>
         <div className="text-sidebar-text text-xs mt-2">{currentUser?.name}</div>
         <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 uppercase tracking-wide">
@@ -24,7 +40,10 @@ export default function Sidebar() {
         {items.map((item, idx) => {
           if (item.section) {
             return (
-              <div key={idx} className="px-4 pt-3 pb-1 text-[10px] font-semibold text-sidebar-text/50 uppercase tracking-widest">
+              <div
+                key={idx}
+                className="px-4 pt-3 pb-1 text-[10px] font-semibold text-sidebar-text/50 uppercase tracking-widest"
+              >
                 {item.section}
               </div>
             );
@@ -33,6 +52,7 @@ export default function Sidebar() {
             <NavLink
               key={item.page}
               to={item.page}
+              onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-4 py-2.5 text-[13px] transition-all duration-150 border-l-[3px] ${
                   isActive

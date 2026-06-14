@@ -68,3 +68,14 @@ body {
 
 /* Line item row */
 .line-item-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 8px; padding: 10px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); }
+
+/* Remove number input spin buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Modal animations */
+@keyframes modal-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-panel-in { from { opacity: 0; transform: scale(0.96) translateY(-8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-overlay { animation: modal-overlay-in 0.15s ease-out; }
+.modal-panel { animation: modal-panel-in 0.2s ease-out; }
