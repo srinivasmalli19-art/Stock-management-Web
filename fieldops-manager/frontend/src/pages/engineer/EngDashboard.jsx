@@ -1,4 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import MetricCard from "../../components/common/MetricCard";
@@ -7,6 +11,9 @@ import Badge from "../../components/common/Badge";
 import { PageSpinner } from "../../components/common/Spinner";
 import EmptyState from "../../components/common/EmptyState";
 import { formatDate, formatCurrency, getCurrentMonthPrefix, formatMonth } from "../../utils/formatters";
+
+const INR = (v) => `₹${Number(v || 0).toLocaleString("en-IN")}`;
+const SHORT = (v) => `₹${(v / 1000).toFixed(0)}k`;
 
 export default function EngDashboard() {
   const { currentUser } = useAuth();
@@ -22,11 +29,20 @@ export default function EngDashboard() {
   const { callsClosed = 0, revenue = 0, incentive = 0, daysPresent = 0, logs = [] } = data || {};
   const firstName = currentUser?.name?.split(" ")[0] || "there";
 
+  // Build per-day chart data from logs
+  const chartData = [...logs]
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .map((log) => ({
+      day: log.date?.slice(8, 10), // DD
+      Calls: log.callsClosed,
+      Revenue: Math.round((log.items || []).reduce((s, i) => s + i.saleValue, 0)),
+    }));
+
   return (
     <div>
       <div className="flex items-end justify-between mb-5">
         <div>
-          <h1 className="text-xl font-bold text-text">Welcome, {firstName} 👋</h1>
+          <h1 className="text-xl font-bold text-text">Welcome, {firstName}</h1>
           <p className="text-sm text-muted mt-0.5">Month-to-date · {formatMonth(prefix)}</p>
         </div>
       </div>
@@ -37,6 +53,51 @@ export default function EngDashboard() {
         <MetricCard label="Days Present" value={daysPresent} color="amber" />
         <MetricCard label="Incentive Earned" value={formatCurrency(incentive)} color="red" />
       </div>
+
+      {chartData.length > 1 && (
+        <Card className="mb-5">
+          <CardTitle>Daily Activity — {formatMonth(prefix)}</CardTitle>
+          <div className="mt-3" style={{ height: 180 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 4, right: 12, left: 4, bottom: 4 }} barGap={2}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 10, fill: "#6b7280" }}
+                  axisLine={false}
+                  tickLine={false}
+                  label={{ value: "Day", position: "insideBottomRight", offset: -4, fontSize: 10, fill: "#9ca3af" }}
+                />
+                <YAxis
+                  yAxisId="calls"
+                  orientation="left"
+                  tick={{ fontSize: 10, fill: "#6b7280" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={24}
+                  allowDecimals={false}
+                />
+                <YAxis
+                  yAxisId="money"
+                  orientation="right"
+                  tick={{ fontSize: 10, fill: "#6b7280" }}
+                  tickFormatter={SHORT}
+                  axisLine={false}
+                  tickLine={false}
+                  width={40}
+                />
+                <Tooltip
+                  formatter={(v, name) => (name === "Calls" ? [v, name] : [INR(v), name])}
+                  labelFormatter={(l) => `Day ${l}`}
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
+                />
+                <Bar yAxisId="calls" dataKey="Calls" fill="#3b5bdb" radius={[3, 3, 0, 0]} maxBarSize={18} />
+                <Bar yAxisId="money" dataKey="Revenue" fill="#16a34a" radius={[3, 3, 0, 0]} maxBarSize={18} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
 
       <Card>
         <CardTitle right={`${logs.length} entries`}>Monthly Progress — {formatMonth(prefix)}</CardTitle>
