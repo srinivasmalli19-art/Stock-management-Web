@@ -5,8 +5,9 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: cd backend && npm install && npx prisma generate && npx prisma migrate deploy
-    startCommand: cd backend && node server.js
+    rootDir: fieldops-manager/backend
+    buildCommand: npm install
+    startCommand: npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -28,14 +29,15 @@ services:
   # Frontend — Static Site with SPA routing
   - type: static
     name: fieldops-frontend
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
+    rootDir: fieldops-manager/frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     pullRequestPreviewsEnabled: false
     routes:
       # SPA fallback — serve index.html for all paths so React Router works on refresh
       - type: rewrite
         source: /*
         destination: /index.html
-    buildFilter:
-      paths:
-        - frontend/**
+    envVars:
+      - key: VITE_API_URL
+        sync: false
