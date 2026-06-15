@@ -16,13 +16,12 @@ const PAGE_TITLES = {
   "/tl/dashboard": "Team Dashboard",
   "/tl/approvals": "Validation Queue",
   "/tl/lp-requests": "LP Requests",
-  "/store/lp-requests": "LP Request Queue",
-  "/admin/lp-approvals": "LP Claim Approvals",
+  "/store/lp-requests": "Claim Validation Queue",
+  "/admin/lp-approvals": "LP & Claim Approvals",
   "/engineer/dashboard": "My Dashboard",
   "/engineer/productivity": "Log Productivity",
   "/engineer/status": "Approval Status",
   "/engineer/stock": "My Van Stock",
-  "/engineer/lp-requests": "My LP Requests",
 };
 
 export default function Topbar({ onMenuClick }) {

@@ -46,15 +46,6 @@ enum RevokeStatus {
   Rejected
 }
 
-enum LpStatus {
-  Pending
-  Claim_Pending
-  Claim_Submitted
-  Claim_Forwarded
-  Claim_Approved
-  Rejected
-}
-
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -79,11 +70,11 @@ model Sku {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  mainInventory    MainInventory?
-  engineerStock    EngineerStock[]
+  mainInventory     MainInventory?
+  engineerStock     EngineerStock[]
   productivityItems ProductivityItem[]
-  stockRequests    StockRequest[]
-  purchaseInward   PurchaseInward[]
+  stockRequests     StockRequest[]
+  purchaseInward    PurchaseInward[]
 }
 
 model MainInventory {
@@ -189,18 +180,45 @@ model RevokeRequest {
   updatedAt      DateTime     @updatedAt
 }
 
+// LP Request — created by Team Leader, approved/rejected by Admin
 model LpRequest {
-  id            String   @id @default(cuid())
-  jobId         String
-  spareCost     Float    @default(0)
-  serviceCost   Float    @default(0)
-  tlEmail       String
-  engineerEmail String?
-  date          DateTime @db.Date
-  status        LpStatus @default(Pending)
-  note          String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String       @id @default(cuid())
+  requestId    String       @unique
+  jobId        String
+  spareCost    Float
+  serviceCost  Float
+  totalCost    Float
+  description  String
+  tlEmail      String
+  requestDate  DateTime     @db.Date
+  status       String       @default("LP_PENDING_ADMIN_APPROVAL")
+  adminRemarks String?
+  approvedBy   String?
+  approvedAt   DateTime?
+  note         String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  claim        ClaimRequest?
+}
+
+// Claim Request — raised by TL after LP approved, validated by Store, approved by Admin
+model ClaimRequest {
+  id                String    @id @default(cuid())
+  lpRequestId       String    @unique
+  claimAmount       Float
+  remarks           String
+  status            String    @default("CLAIM_VALIDATION_PENDING")
+  validatedBy       String?
+  validatedAt       DateTime?
+  validationRemarks String?
+  approvedBy        String?
+  approvedAt        DateTime?
+  approvalRemarks   String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  lpRequest         LpRequest @relation(fields: [lpRequestId], references: [id])
 }
 
 model RefreshToken {

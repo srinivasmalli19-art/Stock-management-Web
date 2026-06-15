@@ -33,7 +33,6 @@ export const NAV_ITEMS = {
     { page: "/engineer/dashboard", icon: "ti-layout-dashboard", label: "My Dashboard" },
     { page: "/engineer/productivity", icon: "ti-clipboard-check", label: "Log Productivity" },
     { page: "/engineer/status", icon: "ti-calendar-stats", label: "Approval Status" },
-    { page: "/engineer/lp-requests", icon: "ti-file-invoice", label: "LP Requests" },
     { section: "Inventory" },
     { page: "/engineer/stock", icon: "ti-package", label: "My Van Stock" },
   ],

@@ -21,6 +21,7 @@ const inventoryRoutes = require("./src/routes/inventory.routes");
 const reportsRoutes = require("./src/routes/reports.routes");
 const dashboardRoutes = require("./src/routes/dashboard.routes");
 const lpRequestRoutes = require("./src/routes/lpRequest.routes");
+const claimRequestRoutes = require("./src/routes/claimRequest.routes");
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/lp-requests", lpRequestRoutes);
+app.use("/api/claim-requests", claimRequestRoutes);
 
 app.get("/health", (req, res) =>
   res.json({

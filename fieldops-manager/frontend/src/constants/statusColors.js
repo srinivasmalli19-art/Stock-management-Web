@@ -27,6 +27,14 @@ export const statusBadgeClass = (status) => {
     Claim_Submitted: "bg-indigo-50 text-indigo-900 border border-indigo-200",
     Claim_Forwarded: "bg-purple-50 text-purple-900 border border-purple-200",
     Claim_Approved: "bg-green-50 text-green-900 border border-green-200",
+    // New LP workflow statuses
+    LP_PENDING_ADMIN_APPROVAL: "bg-amber-50 text-amber-900 border border-amber-200",
+    LP_REJECTED: "bg-red-50 text-red-900 border border-red-200",
+    CLAIM_PENDING: "bg-blue-50 text-blue-900 border border-blue-200",
+    CLAIM_VALIDATION_PENDING: "bg-amber-50 text-amber-900 border border-amber-200",
+    CLAIM_ADMIN_APPROVAL_PENDING: "bg-indigo-50 text-indigo-900 border border-indigo-200",
+    CLAIM_APPROVED: "bg-green-50 text-green-900 border border-green-200",
+    CLAIM_REJECTED: "bg-red-50 text-red-900 border border-red-200",
   };
   return map[status] || "bg-gray-100 text-gray-700 border border-gray-200";
 };
