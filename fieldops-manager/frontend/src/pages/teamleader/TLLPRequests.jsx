@@ -47,7 +47,7 @@ export default function TLLPRequests() {
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { jobId: "", spareCost: 0, serviceCost: 0, date: new Date().toISOString().split("T")[0] },
+    defaultValues: { jobId: "", spareCost: "", serviceCost: "", date: new Date().toISOString().split("T")[0] },
   });
 
   const createMutation = useMutation({

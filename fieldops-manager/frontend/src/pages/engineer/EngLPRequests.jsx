@@ -54,8 +54,8 @@ export default function EngLPRequests() {
     resolver: zodResolver(schema),
     defaultValues: {
       jobId: "",
-      spareCost: 0,
-      serviceCost: 0,
+      spareCost: "",
+      serviceCost: "",
       date: new Date().toISOString().split("T")[0],
       tlEmail: "",
     },
