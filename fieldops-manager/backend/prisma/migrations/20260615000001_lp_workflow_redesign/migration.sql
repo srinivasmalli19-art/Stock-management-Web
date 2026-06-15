@@ -8,10 +8,14 @@ ALTER TABLE "LpRequest" DROP COLUMN IF EXISTS "engineerEmail";
 -- Step 2: Rename date → requestDate
 ALTER TABLE "LpRequest" RENAME COLUMN "date" TO "requestDate";
 
--- Step 3: Convert status enum column to TEXT (preserving data)
+-- Step 3a: Drop the enum DEFAULT before type conversion
+-- (PostgreSQL cannot auto-cast a typed enum default to TEXT)
+ALTER TABLE "LpRequest" ALTER COLUMN "status" DROP DEFAULT;
+
+-- Step 3b: Convert status enum column to TEXT (preserving data)
 ALTER TABLE "LpRequest" ALTER COLUMN "status" TYPE TEXT USING "status"::TEXT;
 
--- Step 4: Drop the old LpStatus enum type
+-- Step 4: Drop the old LpStatus enum type (now safe — no column references it)
 DROP TYPE IF EXISTS "LpStatus";
 
 -- Step 5: Normalise old status values → new status strings
