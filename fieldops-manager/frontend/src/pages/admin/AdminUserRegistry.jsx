@@ -20,13 +20,13 @@ const Avatar = ({ name }) => {
   );
 };
 
-const ROLES = ["Engineer", "Team_Leader", "Store_Manager"];
+const ROLES = ["Admin", "Engineer", "Team_Leader", "Store_Manager"];
 
 export default function AdminUserRegistry() {
   const queryClient = useQueryClient();
   const [editUser, setEditUser] = useState(null);
   const [editForm, setEditForm] = useState({});
-  const [newUser, setNewUser] = useState({ name: "", email: "", role: "Engineer", password: "password" });
+  const [newUser, setNewUser] = useState({ name: "", email: "", role: "Engineer", password: "" });
 
   const { data: usersRes, isLoading } = useQuery({
     queryKey: ["users"],
@@ -38,7 +38,7 @@ export default function AdminUserRegistry() {
     onSuccess: () => {
       toast.success("User added successfully!");
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      setNewUser({ name: "", email: "", role: "Engineer", password: "password" });
+      setNewUser({ name: "", email: "", role: "Engineer", password: "" });
     },
     onError: (err) => toast.error(err?.response?.data?.message || "Failed to add user"),
   });
@@ -56,8 +56,18 @@ export default function AdminUserRegistry() {
     onError: (err) => toast.error(err?.response?.data?.message || "Update failed"),
   });
 
+  const statusMutation = useMutation({
+    mutationFn: ({ id, isActive }) => userService.updateStatus(id, { isActive }),
+    onSuccess: (_, { isActive }) => {
+      toast.success(isActive ? "User activated" : "User deactivated");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "Status update failed"),
+  });
+
   const handleCreate = () => {
     if (!newUser.name || !newUser.email) { toast.error("Enter name and email"); return; }
+    if (!newUser.password) { toast.error("Enter a password"); return; }
     createMutation.mutate(newUser);
   };
 
@@ -74,9 +84,41 @@ export default function AdminUserRegistry() {
   if (isLoading) return <PageSpinner />;
 
   const users = usersRes || [];
+  const admins = users.filter((u) => u.role === "Admin");
   const engineers = users.filter((u) => u.role === "Engineer");
-  const tlUsers = users.filter((u) => u.role === "Team_Leader");
-  const storeUsers = users.filter((u) => u.role === "Store_Manager");
+
+  const UserRow = ({ u }) => (
+    <div className="flex items-center justify-between py-1.5 border-b border-border last:border-b-0">
+      <div className="flex items-center gap-2">
+        <Avatar name={u.name} />
+        <div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-medium">{u.name}</span>
+            {!u.isActive && (
+              <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 border border-gray-200 px-1 py-0.5 rounded">
+                INACTIVE
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-muted">{u.email}</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="sm" onClick={() => openEdit(u)}>
+          <i className="ti ti-edit" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => statusMutation.mutate({ id: u.id, isActive: !u.isActive })}
+          disabled={statusMutation.isPending}
+          title={u.isActive ? "Deactivate user" : "Activate user"}
+        >
+          <i className={u.isActive ? "ti ti-ban text-danger" : "ti ti-circle-check text-success"} />
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -86,10 +128,22 @@ export default function AdminUserRegistry() {
         <Card>
           <CardTitle>Add New User</CardTitle>
           <FormField label="Full Name">
-            <input type="text" className={inputClass} value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} placeholder="Full name" />
+            <input
+              type="text"
+              className={inputClass}
+              value={newUser.name}
+              onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+              placeholder="Full name"
+            />
           </FormField>
           <FormField label="Email">
-            <input type="email" className={inputClass} value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} placeholder="user@fieldops.com" />
+            <input
+              type="email"
+              className={inputClass}
+              value={newUser.email}
+              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+              placeholder="user@company.com"
+            />
           </FormField>
           <FormField label="Role">
             <select className={selectClass} value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
@@ -98,7 +152,13 @@ export default function AdminUserRegistry() {
           </FormField>
           <FormField label="Password">
             <div className="flex gap-2">
-              <input type="text" className={inputClass} value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} placeholder="Set password" />
+              <input
+                type="text"
+                className={inputClass}
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                placeholder="Set initial password"
+              />
               <Button size="sm" onClick={() => setNewUser({ ...newUser, password: genPassword() })}>
                 <i className="ti ti-refresh" />
               </Button>
@@ -111,26 +171,21 @@ export default function AdminUserRegistry() {
         </Card>
 
         <Card>
-          <CardTitle>Staff — TL & Store Manager</CardTitle>
+          <CardTitle>Admins &amp; Staff</CardTitle>
+          {admins.length > 0 && (
+            <div className="mb-3">
+              <div className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Admins</div>
+              {admins.map((u) => <UserRow key={u.id} u={u} />)}
+            </div>
+          )}
           {["Team_Leader", "Store_Manager"].map((role) => {
             const roleUsers = users.filter((u) => u.role === role);
             return (
-              <div key={role} className="mb-3">
+              <div key={role} className="mb-3 last:mb-0">
                 <div className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">{ROLE_LABELS[role]}</div>
-                {roleUsers.map((u) => (
-                  <div key={u.id} className="flex items-center justify-between py-1.5 border-b border-border last:border-b-0">
-                    <div className="flex items-center gap-2">
-                      <Avatar name={u.name} />
-                      <div>
-                        <div className="text-sm font-medium">{u.name}</div>
-                        <div className="text-xs text-muted">{u.email}</div>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(u)}>
-                      <i className="ti ti-edit" />
-                    </Button>
-                  </div>
-                ))}
+                {roleUsers.length === 0
+                  ? <div className="text-xs text-muted py-1">None</div>
+                  : roleUsers.map((u) => <UserRow key={u.id} u={u} />)}
               </div>
             );
           })}
@@ -138,11 +193,11 @@ export default function AdminUserRegistry() {
       </div>
 
       <Card>
-        <CardTitle>Engineers ({engineers.length} active)</CardTitle>
+        <CardTitle>Engineers ({engineers.length})</CardTitle>
         <div className="overflow-x-auto tbl">
           <table>
             <thead>
-              <tr><th>Name</th><th>Email</th><th>Total Logs</th><th>Action</th></tr>
+              <tr><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr>
             </thead>
             <tbody>
               {engineers.map((eng) => (
@@ -154,11 +209,27 @@ export default function AdminUserRegistry() {
                     </div>
                   </td>
                   <td className="text-muted text-xs">{eng.email}</td>
-                  <td>—</td>
                   <td>
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(eng)}>
-                      <i className="ti ti-edit" /> Edit
-                    </Button>
+                    <span className={`text-xs font-semibold ${eng.isActive ? "text-success" : "text-muted"}`}>
+                      {eng.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(eng)}>
+                        <i className="ti ti-edit" /> Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => statusMutation.mutate({ id: eng.id, isActive: !eng.isActive })}
+                        disabled={statusMutation.isPending}
+                      >
+                        {eng.isActive
+                          ? <><i className="ti ti-ban text-danger" /> Disable</>
+                          : <><i className="ti ti-circle-check text-success" /> Enable</>}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -169,7 +240,12 @@ export default function AdminUserRegistry() {
 
       <Modal open={!!editUser} onClose={() => setEditUser(null)} title={`Edit User — ${editUser?.name}`}>
         <FormField label="Full Name">
-          <input type="text" className={inputClass} value={editForm.name || ""} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+          <input
+            type="text"
+            className={inputClass}
+            value={editForm.name || ""}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+          />
         </FormField>
         <FormField label="Email">
           <input className={inputClass} value={editUser?.email || ""} disabled style={{ opacity: 0.6 }} />
@@ -182,7 +258,13 @@ export default function AdminUserRegistry() {
         <hr className="border-border my-3" />
         <FormField label="New Password (leave blank to keep current)">
           <div className="flex gap-2">
-            <input type="text" className={inputClass} value={editForm.newPassword || ""} onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })} placeholder="New password..." />
+            <input
+              type="text"
+              className={inputClass}
+              value={editForm.newPassword || ""}
+              onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
+              placeholder="New password..."
+            />
             <Button size="sm" onClick={() => setEditForm({ ...editForm, newPassword: genPassword() })}>
               <i className="ti ti-refresh" />
             </Button>
