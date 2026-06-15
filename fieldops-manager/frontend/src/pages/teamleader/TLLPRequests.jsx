@@ -10,7 +10,7 @@ import Tabs from "../../components/common/Tabs";
 import EmptyState from "../../components/common/EmptyState";
 import { PageSpinner } from "../../components/common/Spinner";
 import FormField, { inputClass } from "../../components/common/FormField";
-import { formatDate, formatCurrency, genId } from "../../utils/formatters";
+import { formatDate, formatCurrency, genId, buildCsvBlob, triggerDownload, todayStr } from "../../utils/formatters";
 
 const LP_STATUS_LABELS = {
   LP_PENDING_ADMIN_APPROVAL: "Awaiting Admin Approval",
@@ -97,6 +97,18 @@ export default function TLLPRequests() {
     });
   };
 
+  const handleExport = () => {
+    if (tab === "lp") {
+      const headers = ["Request ID", "Job ID", "Date", "Description", "Spare Cost", "Service Cost", "Total Cost", "Status"];
+      const rows = lpList.map((r) => [r.requestId, r.jobId, formatDate(r.requestDate), r.description || "", r.spareCost, r.serviceCost, r.totalCost, r.status.replace(/_/g, " ")]);
+      triggerDownload(buildCsvBlob(headers, rows), `lp-requests-${todayStr()}.csv`);
+    } else {
+      const headers = ["LP Reference", "Job ID", "Claim Amount", "Status", "Raised Date", "Remarks"];
+      const rows = claimList.map((c) => [c.lpRequest?.requestId, c.lpRequest?.jobId, c.claimAmount, c.status.replace(/_/g, " "), formatDate(c.createdAt), c.remarks || ""]);
+      triggerDownload(buildCsvBlob(headers, rows), `claims-${todayStr()}.csv`);
+    }
+  };
+
   const openClaim = (lp) => {
     setSelectedLp(lp);
     setClaimForm({ claimAmount: String(lp.totalCost), remarks: "" });
@@ -128,11 +140,16 @@ export default function TLLPRequests() {
           <h1 className="text-xl font-bold">LP (Labour & Parts) Requests</h1>
           <p className="text-sm text-muted mt-0.5">Create LP requests, raise claims after Admin approval</p>
         </div>
-        {tab === "lp" && (
-          <Button onClick={() => setShowLpModal(true)}>
-            <i className="ti ti-plus" /> New LP Request
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="default" onClick={handleExport}>
+            <i className="ti ti-download" /> CSV
           </Button>
-        )}
+          {tab === "lp" && (
+            <Button onClick={() => setShowLpModal(true)}>
+              <i className="ti ti-plus" /> New LP Request
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Summary badges */}

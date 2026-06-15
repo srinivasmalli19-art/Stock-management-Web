@@ -9,7 +9,7 @@ import Modal from "../../components/common/Modal";
 import Tabs from "../../components/common/Tabs";
 import EmptyState from "../../components/common/EmptyState";
 import { PageSpinner } from "../../components/common/Spinner";
-import { formatDate, formatCurrency } from "../../utils/formatters";
+import { formatDate, formatCurrency, buildCsvBlob, triggerDownload, todayStr } from "../../utils/formatters";
 import { inputClass } from "../../components/common/FormField";
 
 const STATUS_LABELS = {
@@ -46,6 +46,12 @@ export default function StoreLPRequests() {
     onError: (err) => toast.error(err?.response?.data?.message || "Action failed"),
   });
 
+  const handleExport = () => {
+    const headers = ["LP Reference", "Job ID", "Team Leader", "Claim Amount (₹)", "Status", "Submitted Date", "TL Remarks"];
+    const rows = all.map((c) => [c.lpRequest?.requestId || "", c.lpRequest?.jobId || "", c.lpRequest?.tlEmail || "", c.claimAmount, c.status.replace(/_/g, " "), formatDate(c.createdAt), c.remarks || ""]);
+    triggerDownload(buildCsvBlob(headers, rows), `claim-validation-${todayStr()}.csv`);
+  };
+
   const openModal = (claim, act) => {
     setSelected(claim);
     setAction(act);
@@ -77,12 +83,17 @@ export default function StoreLPRequests() {
           <h1 className="text-xl font-bold">Claim Validation Queue</h1>
           <p className="text-sm text-muted mt-0.5">Validate or reject Team Leader claim requests</p>
         </div>
-        {pending.length > 0 && (
+        <div className="flex items-center gap-3">
+          <Button size="sm" variant="default" onClick={handleExport}>
+            <i className="ti ti-download" /> CSV
+          </Button>
+          {pending.length > 0 && (
           <div className="text-right">
             <div className="text-xs text-muted">Awaiting validation</div>
             <div className="font-bold text-lg text-warn">{pending.length} claim{pending.length !== 1 ? "s" : ""}</div>
           </div>
-        )}
+          )}
+        </div>
       </div>
 
       <Tabs tabs={tabs} active={tab} onChange={setTab} />

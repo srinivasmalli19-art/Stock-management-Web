@@ -21,9 +21,33 @@ export default function TLDashboard() {
     queryFn: () => api.get("/dashboard/team-leader").then((r) => r.data.data),
   });
 
+  const { data: productivityData } = useQuery({
+    queryKey: ["tl-queue"],
+    queryFn: () => api.get("/productivity").then((r) => r.data.data),
+    staleTime: 30000,
+  });
+
+  const { data: lpData } = useQuery({
+    queryKey: ["tl-lp-requests"],
+    queryFn: () => api.get("/lp-requests").then((r) => r.data.data),
+    staleTime: 30000,
+  });
+
+  const { data: claimData } = useQuery({
+    queryKey: ["tl-claim-requests"],
+    queryFn: () => api.get("/claim-requests").then((r) => r.data.data),
+    staleTime: 30000,
+  });
+
   if (isLoading) return <PageSpinner />;
 
   const engineers = data || [];
+  const allLogs = productivityData || [];
+  const lpList = lpData || [];
+  const claimList = claimData || [];
+  const pendingValidations = allLogs.filter((l) => l.status === "Pending").length;
+  const pendingLP = lpList.filter((r) => r.status === "LP_PENDING_ADMIN_APPROVAL").length;
+  const activeClaims = claimList.filter((c) => ["CLAIM_VALIDATION_PENDING", "CLAIM_ADMIN_APPROVAL_PENDING"].includes(c.status)).length;
 
   const totals = engineers.reduce(
     (acc, e) => ({
@@ -47,10 +71,15 @@ export default function TLDashboard() {
         <h1 className="text-xl font-bold">Team Performance — {formatMonth(prefix)}</h1>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
         <MetricCard label="Team Calls (MTD)" value={totals.calls} color="accent" />
         <MetricCard label="Team Revenue (MTD)" value={formatCurrency(totals.revenue)} color="green" />
         <MetricCard label="Total Incentive Paid" value={formatCurrency(totals.incentive)} color="amber" />
+      </div>
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        <MetricCard label="Pending Validations" value={pendingValidations} sub={pendingValidations > 0 ? "entries awaiting your review" : "all caught up"} color={pendingValidations > 0 ? "red" : "green"} />
+        <MetricCard label="LP Requests" value={lpList.length} sub={`${pendingLP} awaiting Admin`} color={pendingLP > 0 ? "amber" : "accent"} />
+        <MetricCard label="Active Claims" value={activeClaims} sub="in progress" color={activeClaims > 0 ? "amber" : "green"} />
       </div>
 
       {chartData.length > 0 && (

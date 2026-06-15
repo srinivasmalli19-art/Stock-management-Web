@@ -9,7 +9,7 @@ import Modal from "../../components/common/Modal";
 import Tabs from "../../components/common/Tabs";
 import EmptyState from "../../components/common/EmptyState";
 import { PageSpinner } from "../../components/common/Spinner";
-import { formatDate, formatCurrency } from "../../utils/formatters";
+import { formatDate, formatCurrency, buildCsvBlob, triggerDownload, todayStr } from "../../utils/formatters";
 import { inputClass } from "../../components/common/FormField";
 
 const LP_LABELS = {
@@ -89,6 +89,20 @@ export default function AdminLPApprovals() {
     }
   };
 
+  const handleExport = () => {
+    if (tab === "claim-pending" || (tab === "history" && claimList.length > 0)) {
+      const all = claimData || [];
+      const headers = ["LP Reference", "Job ID", "Team Leader", "Claim Amount", "Status", "Submitted Date"];
+      const rows = all.map((c) => [c.lpRequest?.requestId, c.lpRequest?.jobId, c.lpRequest?.tlEmail, c.claimAmount, c.status.replace(/_/g, " "), formatDate(c.createdAt)]);
+      triggerDownload(buildCsvBlob(headers, rows), `claims-${todayStr()}.csv`);
+    } else {
+      const all = lpData || [];
+      const headers = ["Request ID", "Job ID", "Team Leader", "Date", "Spare", "Service", "Total", "Status", "Remarks"];
+      const rows = all.map((r) => [r.requestId, r.jobId, r.tlEmail, formatDate(r.requestDate), r.spareCost, r.serviceCost, r.totalCost, r.status.replace(/_/g, " "), r.adminRemarks || ""]);
+      triggerDownload(buildCsvBlob(headers, rows), `lp-requests-${todayStr()}.csv`);
+    }
+  };
+
   if (lpLoading || claimLoading) return <PageSpinner />;
 
   const lpList = lpData || [];
@@ -118,12 +132,17 @@ export default function AdminLPApprovals() {
           <h1 className="text-xl font-bold">LP & Claim Approvals</h1>
           <p className="text-sm text-muted mt-0.5">Approve LP requests and final claim decisions</p>
         </div>
-        {(lpPending.length > 0 || claimsPending.length > 0) && (
-          <div className="text-right">
-            <div className="text-xs text-muted">Total pending action</div>
-            <div className="font-bold text-lg text-warn">{lpPending.length + claimsPending.length} item{lpPending.length + claimsPending.length !== 1 ? "s" : ""}</div>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          <Button size="sm" variant="default" onClick={handleExport}>
+            <i className="ti ti-download" /> CSV
+          </Button>
+          {(lpPending.length > 0 || claimsPending.length > 0) && (
+            <div className="text-right">
+              <div className="text-xs text-muted">Total pending action</div>
+              <div className="font-bold text-lg text-warn">{lpPending.length + claimsPending.length} item{lpPending.length + claimsPending.length !== 1 ? "s" : ""}</div>
+            </div>
+          )}
+        </div>
       </div>
 
       {claimsApproved.length > 0 && (

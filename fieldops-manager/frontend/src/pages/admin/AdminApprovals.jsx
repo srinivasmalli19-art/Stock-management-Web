@@ -12,7 +12,7 @@ import IncentivePill from "../../components/common/IncentivePill";
 import EmptyState from "../../components/common/EmptyState";
 import { PageSpinner } from "../../components/common/Spinner";
 import { inputClass } from "../../components/common/FormField";
-import { formatDate, formatCurrency } from "../../utils/formatters";
+import { formatDate, formatCurrency, buildCsvBlob, triggerDownload, todayStr } from "../../utils/formatters";
 
 export default function AdminApprovals() {
   const queryClient = useQueryClient();
@@ -35,6 +35,18 @@ export default function AdminApprovals() {
     },
     onError: (err) => toast.error(err?.response?.data?.message || "Action failed"),
   });
+
+  const handleExport = () => {
+    const all = data || [];
+    const exportRows = all.filter((l) => l.status === "Approved");
+    const headers = ["Engineer", "Date", "Calls Closed", "Revenue (₹)", "Incentive Awarded (₹)", "Status"];
+    const rows = exportRows.map((l) => {
+      const rev = (l.items || []).reduce((s, i) => s + i.saleValue, 0);
+      const inc = (l.items || []).reduce((s, i) => s + (i.adminIncentive || 0), 0);
+      return [l.engineer?.name, formatDate(l.date), l.callsClosed, rev.toFixed(2), inc.toFixed(2), l.status];
+    });
+    triggerDownload(buildCsvBlob(headers, rows), `productivity-logs-${todayStr()}.csv`);
+  };
 
   if (isLoading) return <PageSpinner />;
 
@@ -71,7 +83,12 @@ export default function AdminApprovals() {
     <div>
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-xl font-bold">Productivity Approval Queue</h1>
-        <Badge status="Validated">{pending.length} awaiting</Badge>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="default" onClick={handleExport} title="Export approved logs as CSV">
+            <i className="ti ti-download" /> CSV
+          </Button>
+          <Badge status="Validated">{pending.length} awaiting</Badge>
+        </div>
       </div>
 
       <Tabs tabs={tabs} active={tab} onChange={setTab} />

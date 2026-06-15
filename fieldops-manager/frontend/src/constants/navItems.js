@@ -1,5 +1,6 @@
 export const NAV_ITEMS = {
   Admin: [
+    { page: "/admin/dashboard", icon: "ti-layout-dashboard", label: "Dashboard" },
     { section: "Workflows" },
     { page: "/admin/approvals", icon: "ti-check-square", label: "Approval Queue" },
     { page: "/admin/purchase-approvals", icon: "ti-package-import", label: "Purchase Approvals" },

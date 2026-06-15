@@ -24,9 +24,25 @@ export default function EngDashboard() {
     queryFn: () => api.get("/dashboard/engineer").then((r) => r.data.data),
   });
 
+  const { data: stockRes } = useQuery({
+    queryKey: ["my-stock"],
+    queryFn: () => api.get("/inventory/my-stock").then((r) => r.data.data),
+    staleTime: 60000,
+  });
+
+  const { data: reqRes } = useQuery({
+    queryKey: ["stock-requests", "mine"],
+    queryFn: () => api.get("/stock-requests").then((r) => r.data.data),
+    staleTime: 60000,
+  });
+
   if (isLoading) return <PageSpinner />;
 
   const { callsClosed = 0, revenue = 0, incentive = 0, daysPresent = 0, logs = [] } = data || {};
+  const stock = stockRes || [];
+  const requests = reqRes || [];
+  const pendingReqs = requests.filter((r) => r.status === "Pending").length;
+  const stockItems = stock.length;
   const firstName = currentUser?.name?.split(" ")[0] || "there";
 
   // Build per-day chart data from logs
@@ -47,11 +63,15 @@ export default function EngDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
         <MetricCard label="Calls Closed (MTD)" value={callsClosed} color="accent" />
         <MetricCard label="Revenue (MTD)" value={formatCurrency(revenue)} color="green" />
         <MetricCard label="Days Present" value={daysPresent} color="amber" />
         <MetricCard label="Incentive Earned" value={formatCurrency(incentive)} color="red" />
+      </div>
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <MetricCard label="Van Stock Items" value={stockItems} sub="SKUs currently allocated" color="accent" />
+        <MetricCard label="Pending Stock Requests" value={pendingReqs} sub={pendingReqs > 0 ? "awaiting store approval" : "all fulfilled"} color={pendingReqs > 0 ? "amber" : "green"} />
       </div>
 
       {chartData.length > 1 && (

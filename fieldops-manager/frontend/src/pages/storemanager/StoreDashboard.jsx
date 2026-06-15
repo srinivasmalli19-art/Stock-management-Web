@@ -14,6 +14,12 @@ export default function StoreDashboard() {
     queryFn: () => api.get("/dashboard/store").then((r) => r.data.data),
   });
 
+  const { data: claimData } = useQuery({
+    queryKey: ["store-claim-requests"],
+    queryFn: () => api.get("/claim-requests").then((r) => r.data.data),
+    staleTime: 30000,
+  });
+
   if (isLoading) return <PageSpinner />;
 
   const {
@@ -23,16 +29,21 @@ export default function StoreDashboard() {
     totalInventoryValue = 0,
     recentPurchase = [],
   } = data || {};
+  const claimList = claimData || [];
+  const pendingClaims = claimList.filter((c) => c.status === "CLAIM_VALIDATION_PENDING").length;
 
   return (
     <div>
       <div className="mb-5"><h1 className="text-xl font-bold">Store Dashboard</h1></div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
         <MetricCard label="Pending Stock Requests" value={pendingStockRequests} color="accent" />
         <MetricCard label="Purchase Inward (Pending Admin)" value={pendingPurchaseInward} color="amber" />
         <MetricCard label="Low Stock SKUs" value={lowStockSkus.length} color="red" />
         <MetricCard label="Total Inventory Value" value={formatCurrency(totalInventoryValue)} color="green" />
+      </div>
+      <div className="grid grid-cols-1 gap-3 mb-5">
+        <MetricCard label="Claims Pending Validation" value={pendingClaims} sub={pendingClaims > 0 ? "LP claims awaiting your review" : "no claims pending"} color={pendingClaims > 0 ? "red" : "green"} />
       </div>
 
       {pendingPurchaseInward > 0 && (

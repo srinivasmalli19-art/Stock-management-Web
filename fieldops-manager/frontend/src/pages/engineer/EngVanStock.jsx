@@ -8,7 +8,7 @@ import Button from "../../components/common/Button";
 import FormField, { selectClass, inputClass } from "../../components/common/FormField";
 import SkuTag from "../../components/common/SkuTag";
 import EmptyState from "../../components/common/EmptyState";
-import { formatDate } from "../../utils/formatters";
+import { formatDate, buildCsvBlob, triggerDownload, todayStr } from "../../utils/formatters";
 
 export default function EngVanStock() {
   const queryClient = useQueryClient();
@@ -58,9 +58,22 @@ export default function EngVanStock() {
     return s;
   };
 
+  const handleExport = () => {
+    const headers = ["SKU ID", "Item Name", "Quantity"];
+    const rows = stock.map((s) => [s.skuId, s.sku?.name, s.qty]);
+    triggerDownload(buildCsvBlob(headers, rows), `van-stock-${todayStr()}.csv`);
+  };
+
   return (
     <div>
-      <div className="mb-5"><h1 className="text-xl font-bold">My Van Stock</h1></div>
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-xl font-bold">My Van Stock</h1>
+        {stock.length > 0 && (
+          <Button size="sm" variant="default" onClick={handleExport}>
+            <i className="ti ti-download" /> Export CSV
+          </Button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
         <Card>

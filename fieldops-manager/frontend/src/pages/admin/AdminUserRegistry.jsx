@@ -27,6 +27,7 @@ export default function AdminUserRegistry() {
   const [editUser, setEditUser] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [newUser, setNewUser] = useState({ name: "", email: "", role: "Engineer", password: "" });
+  const [engSearch, setEngSearch] = useState("");
 
   const { data: usersRes, isLoading } = useQuery({
     queryKey: ["users"],
@@ -86,6 +87,10 @@ export default function AdminUserRegistry() {
   const users = usersRes || [];
   const admins = users.filter((u) => u.role === "Admin");
   const engineers = users.filter((u) => u.role === "Engineer");
+  const q = engSearch.toLowerCase();
+  const filteredEngineers = q
+    ? engineers.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+    : engineers;
 
   const UserRow = ({ u }) => (
     <div className="flex items-center justify-between py-1.5 border-b border-border last:border-b-0">
@@ -193,14 +198,26 @@ export default function AdminUserRegistry() {
       </div>
 
       <Card>
-        <CardTitle>Engineers ({engineers.length})</CardTitle>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-text">Engineers ({engineers.length})</h3>
+          <input
+            type="text"
+            value={engSearch}
+            onChange={(e) => setEngSearch(e.target.value)}
+            placeholder="Search by name or email…"
+            className="text-xs border border-border rounded-md px-2.5 py-1.5 outline-none focus:border-accent w-52"
+          />
+        </div>
         <div className="overflow-x-auto tbl">
           <table>
             <thead>
               <tr><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr>
             </thead>
             <tbody>
-              {engineers.map((eng) => (
+              {filteredEngineers.length === 0 && (
+                <tr><td colSpan={4} className="text-center text-muted py-4 text-xs">No engineers match "{engSearch}"</td></tr>
+              )}
+              {filteredEngineers.map((eng) => (
                 <tr key={eng.id}>
                   <td>
                     <div className="flex items-center gap-2">

@@ -23,6 +23,7 @@ import StoreInventoryReport from "./pages/storemanager/StoreInventoryReport";
 import StoreLPRequests from "./pages/storemanager/StoreLPRequests";
 
 // Admin
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminApprovals from "./pages/admin/AdminApprovals";
 import AdminPurchaseApprovals from "./pages/admin/AdminPurchaseApprovals";
 import AdminRevokeApprovals from "./pages/admin/AdminRevokeApprovals";
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="/store/lp-requests" element={<StoreLPRequests />} />
 
             {/* Admin */}
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/approvals" element={<AdminApprovals />} />
             <Route path="/admin/purchase-approvals" element={<AdminPurchaseApprovals />} />
             <Route path="/admin/revoke-approvals" element={<AdminRevokeApprovals />} />

@@ -55,3 +55,15 @@ export const triggerDownload = (blob, filename) => {
   a.remove();
   window.URL.revokeObjectURL(url);
 };
+
+// Client-side CSV builder — UTF-8 BOM ensures correct Excel rendering
+export const buildCsvBlob = (headers, rows) => {
+  const escape = (v) => {
+    const s = String(v == null ? "" : v);
+    return /[,"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const csv = [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n");
+  return new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+};
+
+export const todayStr = () => new Date().toISOString().split("T")[0];
