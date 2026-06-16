@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
@@ -20,11 +21,17 @@ export function AuthProvider({ children }) {
   const fetchMe = useCallback(async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      if (!token) return;
+      if (!token) {
+        console.log("[Auth] fetchMe: no token, skipping");
+        return;
+      }
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      console.log("[Auth] fetchMe: calling /users/me");
       const res = await api.get("/users/me");
+      console.log("[Auth] fetchMe: got user, role =", res.data.data?.role);
       setCurrentUser(res.data.data);
-    } catch {
+    } catch (err) {
+      console.error("[Auth] fetchMe failed:", err?.response?.status, err?.message);
       setCurrentUser(null);
       localStorage.removeItem("accessToken");
     } finally {
@@ -37,12 +44,20 @@ export function AuthProvider({ children }) {
   }, [fetchMe]);
 
   const login = useCallback(async (email, password) => {
+    console.log("[Auth] login: calling /auth/login");
     const res = await api.post("/auth/login", { email, password });
     const { accessToken, user } = res.data.data;
+    console.log("[Auth] login: success, role =", user.role, "orgId =", user.orgId);
     localStorage.setItem("accessToken", accessToken);
     api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
-    setCurrentUser(user);
-    navigate(ROLE_DEFAULT_ROUTES[user.role] || "/");
+    const dest = ROLE_DEFAULT_ROUTES[user.role] || "/";
+    console.log("[Auth] login: navigating to", dest);
+    // flushSync commits the state update before navigate() fires so ProtectedRoute
+    // never sees currentUser=null when it renders the destination route.
+    flushSync(() => {
+      setCurrentUser(user);
+    });
+    navigate(dest);
     return user;
   }, [navigate]);
 

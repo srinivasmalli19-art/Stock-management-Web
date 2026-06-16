@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import AppShell from "./components/layout/AppShell";
 import LoginPage from "./pages/auth/LoginPage";
@@ -39,7 +39,18 @@ import AdminSkuRegistry from "./pages/admin/AdminSkuRegistry";
 import AdminUserRegistry from "./pages/admin/AdminUserRegistry";
 import AdminLPApprovals from "./pages/admin/AdminLPApprovals";
 
+const ROOT_ROUTES = {
+  Super_Admin: "/superadmin/dashboard",
+  Admin: "/admin/approvals",
+  Store_Manager: "/store/dashboard",
+  Team_Leader: "/tl/approvals",
+  Engineer: "/engineer/dashboard",
+};
+
 function RoleRedirect() {
+  const { currentUser, loading } = useAuth();
+  if (loading) return null;
+  if (currentUser) return <Navigate to={ROOT_ROUTES[currentUser.role] || "/login"} replace />;
   return <Navigate to="/login" replace />;
 }
 
