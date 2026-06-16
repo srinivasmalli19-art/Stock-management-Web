@@ -1,6 +1,9 @@
 import { useLocation } from "react-router-dom";
 
 const PAGE_TITLES = {
+  "/superadmin/dashboard": "Global Overview",
+  "/superadmin/organisations": "Organisation Management",
+  "/superadmin/users": "All Users",
   "/admin/dashboard": "Admin Dashboard",
   "/admin/approvals": "Productivity Approval Queue",
   "/admin/purchase-approvals": "Purchase Inward Approvals",
