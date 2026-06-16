@@ -5,10 +5,10 @@ const asyncHandler = require("../utils/asyncHandler");
 const getClaimRequests = asyncHandler(async (req, res) => {
   const where = {};
 
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
   if (req.user.role === "Team_Leader") {
     where.lpRequest = { tlEmail: req.user.email };
   }
-  // Store_Manager and Admin see all claims
 
   const claims = await prisma.claimRequest.findMany({
     where,
@@ -20,12 +20,11 @@ const getClaimRequests = asyncHandler(async (req, res) => {
 
 const createClaimRequest = asyncHandler(async (req, res) => {
   const { lpRequestId, claimAmount, remarks } = req.body;
+  const orgId = req.user.orgId;
 
-  const lp = await prisma.lpRequest.findUnique({
-    where: { id: lpRequestId },
-    include: { claim: true },
-  });
+  const lp = await prisma.lpRequest.findUnique({ where: { id: lpRequestId }, include: { claim: true } });
   if (!lp) return error(res, "LP Request not found", 404);
+  if (lp.orgId !== orgId) return error(res, "LP Request not found", 404);
   if (lp.tlEmail !== req.user.email)
     return error(res, "You can only raise claims for your own LP requests", 403);
   if (lp.status !== "CLAIM_PENDING")
@@ -39,6 +38,7 @@ const createClaimRequest = asyncHandler(async (req, res) => {
       claimAmount: Number(claimAmount),
       remarks,
       status: "CLAIM_VALIDATION_PENDING",
+      orgId,
     },
     include: { lpRequest: true },
   });
@@ -47,10 +47,11 @@ const createClaimRequest = asyncHandler(async (req, res) => {
 
 const validateClaim = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { action, remarks } = req.body; // action: "validate" | "reject"
+  const { action, remarks } = req.body;
 
   const claim = await prisma.claimRequest.findUnique({ where: { id } });
   if (!claim) return error(res, "Claim not found", 404);
+  if (req.user.role !== "Super_Admin" && claim.orgId !== req.user.orgId) return error(res, "Claim not found", 404);
   if (claim.status !== "CLAIM_VALIDATION_PENDING")
     return error(res, "Claim is not pending Store validation", 400);
 
@@ -75,10 +76,11 @@ const validateClaim = asyncHandler(async (req, res) => {
 
 const adminApproveClaim = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { action, remarks } = req.body; // action: "approve" | "reject"
+  const { action, remarks } = req.body;
 
   const claim = await prisma.claimRequest.findUnique({ where: { id } });
   if (!claim) return error(res, "Claim not found", 404);
+  if (req.user.role !== "Super_Admin" && claim.orgId !== req.user.orgId) return error(res, "Claim not found", 404);
   if (claim.status !== "CLAIM_ADMIN_APPROVAL_PENDING")
     return error(res, "Claim is not pending Admin approval", 400);
 

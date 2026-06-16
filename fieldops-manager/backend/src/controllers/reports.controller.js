@@ -3,12 +3,12 @@ const { success } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { Parser } = require("json2csv");
 
-// Build WAVCO (Weighted Average Cost) per SKU from all approved purchases.
-// Returns a map: { skuId: weightedAvgUnitPrice }
-// Falls back to MainInventory.unitPrice for SKUs with no purchase history.
-async function buildWeightedAvgCost() {
+async function buildWeightedAvgCost(orgId) {
+  const where = { status: "Approved" };
+  if (orgId) where.orgId = orgId;
+
   const purchases = await prisma.purchaseInward.findMany({
-    where: { status: "Approved" },
+    where,
     select: { skuId: true, qty: true, unitPrice: true },
   });
 
@@ -36,18 +36,20 @@ const getPLReport = asyncHandler(async (req, res) => {
   const end = new Date(start);
   end.setMonth(end.getMonth() + 1);
 
+  const orgId = req.user.role !== "Super_Admin" ? req.user.orgId : null;
+  const engWhere = { role: "Engineer", isActive: true };
+  if (orgId) engWhere.orgId = orgId;
+
   const [engineers, wavco] = await Promise.all([
-    prisma.user.findMany({ where: { role: "Engineer", isActive: true }, orderBy: { name: "asc" } }),
-    buildWeightedAvgCost(),
+    prisma.user.findMany({ where: engWhere, orderBy: { name: "asc" } }),
+    buildWeightedAvgCost(orgId),
   ]);
 
   const engineerData = await Promise.all(
     engineers.map(async (eng) => {
       const logs = await prisma.productivityLog.findMany({
         where: { engineerId: eng.id, status: "Approved", date: { gte: start, lt: end } },
-        include: {
-          items: { include: { sku: { include: { mainInventory: true } } } },
-        },
+        include: { items: { include: { sku: { include: { mainInventory: true } } } } },
       });
 
       let revenue = 0, incentive = 0, accessoriesCost = 0;
@@ -56,23 +58,12 @@ const getPLReport = asyncHandler(async (req, res) => {
         log.items.forEach((item) => {
           revenue += item.saleValue;
           incentive += item.adminIncentive || 0;
-          // WAVCO: use weighted average if purchase history exists, else fall back to current unit price
           const unitPrice = wavco[item.skuId] ?? item.sku?.mainInventory?.unitPrice ?? 0;
           accessoriesCost += item.qty * unitPrice;
         });
       });
 
-      const pl = revenue - incentive - accessoriesCost;
-
-      return {
-        engineerId: eng.id,
-        name: eng.name,
-        email: eng.email,
-        revenue,
-        incentive,
-        accessoriesCost,
-        pl,
-      };
+      return { engineerId: eng.id, name: eng.name, email: eng.email, revenue, incentive, accessoriesCost, pl: revenue - incentive - accessoriesCost };
     })
   );
 
@@ -97,9 +88,13 @@ const downloadPLCsv = asyncHandler(async (req, res) => {
   const end = new Date(start);
   end.setMonth(end.getMonth() + 1);
 
+  const orgId = req.user.role !== "Super_Admin" ? req.user.orgId : null;
+  const engWhere = { role: "Engineer", isActive: true };
+  if (orgId) engWhere.orgId = orgId;
+
   const [engineers, wavco] = await Promise.all([
-    prisma.user.findMany({ where: { role: "Engineer", isActive: true }, orderBy: { name: "asc" } }),
-    buildWeightedAvgCost(),
+    prisma.user.findMany({ where: engWhere, orderBy: { name: "asc" } }),
+    buildWeightedAvgCost(orgId),
   ]);
 
   const rows = await Promise.all(
@@ -138,8 +133,11 @@ const downloadPLCsv = asyncHandler(async (req, res) => {
 });
 
 const getSupplierReport = asyncHandler(async (req, res) => {
+  const where = { status: "Approved" };
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
+
   const inwards = await prisma.purchaseInward.findMany({
-    where: { status: "Approved" },
+    where,
     include: { sku: { select: { id: true, name: true } } },
     orderBy: { vendor: "asc" },
   });
@@ -157,8 +155,11 @@ const getSupplierReport = asyncHandler(async (req, res) => {
 });
 
 const downloadSupplierCsv = asyncHandler(async (req, res) => {
+  const where = { status: "Approved" };
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
+
   const inwards = await prisma.purchaseInward.findMany({
-    where: { status: "Approved" },
+    where,
     include: { sku: { select: { id: true, name: true } } },
     orderBy: [{ vendor: "asc" }, { date: "asc" }],
   });

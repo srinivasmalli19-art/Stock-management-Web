@@ -7,6 +7,7 @@ const getAttendance = asyncHandler(async (req, res) => {
   const { month, engineerId } = req.query;
   const where = {};
 
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
   if (engineerId) where.engineerId = engineerId;
   if (month) {
     const [year, mo] = month.split("-");
@@ -27,10 +28,10 @@ const getAttendance = asyncHandler(async (req, res) => {
 
 const getAttendanceSummary = asyncHandler(async (req, res) => {
   const { month } = req.query;
-  const engineers = await prisma.user.findMany({
-    where: { role: "Engineer", isActive: true },
-    orderBy: { name: "asc" },
-  });
+  const engWhere = { role: "Engineer", isActive: true };
+  if (req.user.role !== "Super_Admin") engWhere.orgId = req.user.orgId;
+
+  const engineers = await prisma.user.findMany({ where: engWhere, orderBy: { name: "asc" } });
 
   const monthStr = month || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
   const [year, mo] = monthStr.split("-");
@@ -89,10 +90,10 @@ const downloadAttendanceCsv = asyncHandler(async (req, res) => {
     `${year}-${mo}-${String(i + 1).padStart(2, "0")}`
   );
 
-  const engineers = await prisma.user.findMany({
-    where: { role: "Engineer", isActive: true },
-    orderBy: { name: "asc" },
-  });
+  const engWhere = { role: "Engineer", isActive: true };
+  if (req.user.role !== "Super_Admin") engWhere.orgId = req.user.orgId;
+
+  const engineers = await prisma.user.findMany({ where: engWhere, orderBy: { name: "asc" } });
 
   const rows = await Promise.all(
     engineers.map(async (eng) => {

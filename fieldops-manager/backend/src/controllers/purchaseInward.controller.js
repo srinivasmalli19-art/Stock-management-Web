@@ -6,6 +6,7 @@ const getInwards = asyncHandler(async (req, res) => {
   const { status, vendor, month } = req.query;
   const where = {};
 
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
   if (status) where.status = status;
   if (vendor) where.vendor = { contains: vendor, mode: "insensitive" };
   if (month) {
@@ -27,12 +28,14 @@ const getInwards = asyncHandler(async (req, res) => {
 
 const createInward = asyncHandler(async (req, res) => {
   const { skuId, qty, unitPrice, vendor, invoiceNo, date } = req.body;
+  const orgId = req.user.orgId;
 
   const sku = await prisma.sku.findUnique({ where: { id: skuId } });
   if (!sku) return error(res, "SKU not found", 404);
+  if (sku.orgId !== orgId) return error(res, "SKU not found", 404);
 
   const entry = await prisma.purchaseInward.create({
-    data: { skuId, qty, unitPrice, vendor, invoiceNo: invoiceNo || "N/A", date: new Date(date), status: "Pending" },
+    data: { skuId, qty, unitPrice, vendor, invoiceNo: invoiceNo || "N/A", date: new Date(date), status: "Pending", orgId },
     include: { sku: { select: { id: true, name: true } } },
   });
 
@@ -44,6 +47,7 @@ const approveInward = asyncHandler(async (req, res) => {
 
   const entry = await prisma.purchaseInward.findUnique({ where: { id }, include: { sku: true } });
   if (!entry) return error(res, "Purchase entry not found", 404);
+  if (req.user.role !== "Super_Admin" && entry.orgId !== req.user.orgId) return error(res, "Purchase entry not found", 404);
   if (entry.status !== "Pending") return error(res, "Entry already processed", 400);
 
   await prisma.$transaction(async (tx) => {
@@ -55,7 +59,7 @@ const approveInward = asyncHandler(async (req, res) => {
       });
     } else {
       await tx.mainInventory.create({
-        data: { skuId: entry.skuId, qty: entry.qty, unitPrice: entry.unitPrice },
+        data: { skuId: entry.skuId, qty: entry.qty, unitPrice: entry.unitPrice, orgId: entry.orgId },
       });
     }
     await tx.purchaseInward.update({ where: { id }, data: { status: "Approved" } });
@@ -69,6 +73,7 @@ const rejectInward = asyncHandler(async (req, res) => {
 
   const entry = await prisma.purchaseInward.findUnique({ where: { id } });
   if (!entry) return error(res, "Purchase entry not found", 404);
+  if (req.user.role !== "Super_Admin" && entry.orgId !== req.user.orgId) return error(res, "Purchase entry not found", 404);
   if (entry.status !== "Pending") return error(res, "Entry already processed", 400);
 
   await prisma.purchaseInward.update({ where: { id }, data: { status: "Rejected" } });

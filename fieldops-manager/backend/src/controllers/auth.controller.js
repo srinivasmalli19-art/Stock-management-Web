@@ -23,7 +23,7 @@ const login = asyncHandler(async (req, res) => {
   const valid = await comparePassword(password, user.passwordHash);
   if (!valid) return error(res, "Invalid credentials", 401);
 
-  const payload = { id: user.id, email: user.email, role: user.role, name: user.name };
+  const payload = { id: user.id, email: user.email, role: user.role, name: user.name, orgId: user.orgId ?? null };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken({ id: user.id });
 
@@ -70,7 +70,7 @@ const refresh = asyncHandler(async (req, res) => {
   // Rotate refresh token
   await prisma.refreshToken.update({ where: { token }, data: { isRevoked: true } });
 
-  const payload = { id: user.id, email: user.email, role: user.role, name: user.name };
+  const payload = { id: user.id, email: user.email, role: user.role, name: user.name, orgId: user.orgId ?? null };
   const newAccessToken = generateAccessToken(payload);
   const newRefreshToken = generateRefreshToken({ id: user.id });
 

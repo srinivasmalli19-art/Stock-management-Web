@@ -1,10 +1,12 @@
 const express = require("express");
 const { getPLReport, downloadPLCsv, getSupplierReport, downloadSupplierCsv } = require("../controllers/reports.controller");
 const authenticate = require("../middlewares/authenticate");
+const requireOrg = require("../middlewares/requireOrg");
 const authorize = require("../middlewares/authorize");
 
 const router = express.Router();
 router.use(authenticate);
+router.use(requireOrg);
 
 router.get("/pl", authorize("Admin"), getPLReport);
 router.get("/pl/csv", authorize("Admin"), downloadPLCsv);

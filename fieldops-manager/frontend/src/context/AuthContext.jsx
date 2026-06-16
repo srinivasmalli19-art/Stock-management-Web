@@ -5,6 +5,7 @@ import api from "../services/api";
 const AuthContext = createContext(null);
 
 const ROLE_DEFAULT_ROUTES = {
+  Super_Admin: "/superadmin/dashboard",
   Admin: "/admin/approvals",
   Store_Manager: "/store/dashboard",
   Team_Leader: "/tl/approvals",

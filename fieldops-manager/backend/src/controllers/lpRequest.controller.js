@@ -11,8 +11,9 @@ function generateRequestId() {
 
 const getLpRequests = asyncHandler(async (req, res) => {
   const where = {};
+
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
   if (req.user.role === "Team_Leader") where.tlEmail = req.user.email;
-  // Admin sees all
 
   const requests = await prisma.lpRequest.findMany({
     where,
@@ -24,6 +25,7 @@ const getLpRequests = asyncHandler(async (req, res) => {
 
 const createLpRequest = asyncHandler(async (req, res) => {
   const { jobId, spareCost, serviceCost, description } = req.body;
+  const orgId = req.user.orgId;
 
   const spare = Number(spareCost) || 0;
   const service = Number(serviceCost) || 0;
@@ -39,6 +41,7 @@ const createLpRequest = asyncHandler(async (req, res) => {
       tlEmail: req.user.email,
       requestDate: new Date(),
       status: "LP_PENDING_ADMIN_APPROVAL",
+      orgId,
     },
     include: { claim: true },
   });
@@ -47,10 +50,11 @@ const createLpRequest = asyncHandler(async (req, res) => {
 
 const adminApproveLp = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { action, remarks } = req.body; // action: "approve" | "reject"
+  const { action, remarks } = req.body;
 
   const request = await prisma.lpRequest.findUnique({ where: { id } });
   if (!request) return error(res, "LP request not found", 404);
+  if (req.user.role !== "Super_Admin" && request.orgId !== req.user.orgId) return error(res, "LP request not found", 404);
   if (request.status !== "LP_PENDING_ADMIN_APPROVAL")
     return error(res, "Only pending LP requests can be reviewed", 400);
 

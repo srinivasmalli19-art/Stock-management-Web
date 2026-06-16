@@ -4,7 +4,11 @@ const asyncHandler = require("../utils/asyncHandler");
 const { Parser } = require("json2csv");
 
 const getMainInventory = asyncHandler(async (req, res) => {
+  const where = {};
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
+
   const items = await prisma.mainInventory.findMany({
+    where,
     include: { sku: { select: { id: true, name: true, lowStockAlert: true } } },
     orderBy: { skuId: "asc" },
   });
@@ -26,6 +30,12 @@ const getMainInventory = asyncHandler(async (req, res) => {
 const getEngineerStock = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
+  // IDOR: verify engineer belongs to same org before exposing their stock
+  if (req.user.role !== "Super_Admin") {
+    const engineer = await prisma.user.findUnique({ where: { id } });
+    if (!engineer || engineer.orgId !== req.user.orgId) return error(res, "Engineer not found", 404);
+  }
+
   const stock = await prisma.engineerStock.findMany({
     where: { engineerId: id },
     include: { sku: { select: { id: true, name: true } } },
@@ -46,7 +56,11 @@ const getMyStock = asyncHandler(async (req, res) => {
 });
 
 const downloadInventoryCsv = asyncHandler(async (req, res) => {
+  const where = {};
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
+
   const items = await prisma.mainInventory.findMany({
+    where,
     include: { sku: { select: { id: true, name: true, lowStockAlert: true } } },
     orderBy: { skuId: "asc" },
   });

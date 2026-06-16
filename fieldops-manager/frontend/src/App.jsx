@@ -22,6 +22,11 @@ import StoreStockRequests from "./pages/storemanager/StoreStockRequests";
 import StoreInventoryReport from "./pages/storemanager/StoreInventoryReport";
 import StoreLPRequests from "./pages/storemanager/StoreLPRequests";
 
+// Super Admin
+import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
+import SuperAdminOrgs from "./pages/superadmin/SuperAdminOrgs";
+import SuperAdminUsers from "./pages/superadmin/SuperAdminUsers";
+
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminApprovals from "./pages/admin/AdminApprovals";
@@ -46,6 +51,11 @@ export default function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
+            {/* Super Admin */}
+            <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
+            <Route path="/superadmin/organisations" element={<SuperAdminOrgs />} />
+            <Route path="/superadmin/users" element={<SuperAdminUsers />} />
+
             {/* Engineer */}
             <Route path="/engineer/dashboard" element={<EngDashboard />} />
             <Route path="/engineer/productivity" element={<EngProductivity />} />

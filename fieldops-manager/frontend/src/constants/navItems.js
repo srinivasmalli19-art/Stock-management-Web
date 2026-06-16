@@ -1,4 +1,10 @@
 export const NAV_ITEMS = {
+  Super_Admin: [
+    { section: "Global" },
+    { page: "/superadmin/dashboard", icon: "ti-layout-dashboard", label: "SA Dashboard" },
+    { page: "/superadmin/organisations", icon: "ti-building", label: "Organisations" },
+    { page: "/superadmin/users", icon: "ti-users", label: "All Users" },
+  ],
   Admin: [
     { page: "/admin/dashboard", icon: "ti-layout-dashboard", label: "Dashboard" },
     { section: "Workflows" },

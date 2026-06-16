@@ -104,8 +104,8 @@ model Sku {
   id            String  @id
   name          String
   lowStockAlert Int     @default(0)
-  orgId         String?
-  org           Organisation? @relation(fields: [orgId], references: [id])
+  orgId         String
+  org           Organisation @relation(fields: [orgId], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -124,8 +124,8 @@ model MainInventory {
   sku       Sku     @relation(fields: [skuId], references: [id])
   qty       Int     @default(0)
   unitPrice Float   @default(0)
-  orgId     String?
-  org       Organisation? @relation(fields: [orgId], references: [id])
+  orgId     String
+  org       Organisation @relation(fields: [orgId], references: [id])
   updatedAt DateTime @updatedAt
 
   @@index([orgId])
@@ -138,8 +138,8 @@ model EngineerStock {
   skuId      String
   sku        Sku     @relation(fields: [skuId], references: [id])
   qty        Int     @default(0)
-  orgId      String?
-  org        Organisation? @relation(fields: [orgId], references: [id])
+  orgId      String
+  org        Organisation @relation(fields: [orgId], references: [id])
   updatedAt  DateTime @updatedAt
 
   @@unique([engineerId, skuId])
@@ -158,8 +158,8 @@ model ProductivityLog {
   status      ProductivityStatus @default(Pending)
   tlNote      String?
   adminNote   String?
-  orgId       String?
-  org         Organisation?      @relation(fields: [orgId], references: [id])
+  orgId       String
+  org         Organisation       @relation(fields: [orgId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -193,8 +193,8 @@ model Attendance {
   status            AttendanceStatus @default(Present)
   productivityLogId String?          @unique
   log               ProductivityLog? @relation(fields: [productivityLogId], references: [id])
-  orgId             String?
-  org               Organisation?    @relation(fields: [orgId], references: [id])
+  orgId             String
+  org               Organisation     @relation(fields: [orgId], references: [id])
 
   @@unique([engineerId, date])
   @@index([orgId])
@@ -212,8 +212,8 @@ model StockRequest {
   qty        Int
   status     StockRequestStatus @default(Pending)
   note       String?
-  orgId      String?
-  org        Organisation?      @relation(fields: [orgId], references: [id])
+  orgId      String
+  org        Organisation       @relation(fields: [orgId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -231,8 +231,8 @@ model RevokeRequest {
   skuId          String
   qty            Int
   status         RevokeStatus @default(Revoke_Pending)
-  orgId          String?
-  org            Organisation? @relation(fields: [orgId], references: [id])
+  orgId          String
+  org            Organisation  @relation(fields: [orgId], references: [id])
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -252,8 +252,8 @@ model PurchaseInward {
   invoiceNo String
   date      DateTime       @db.Date
   status    PurchaseStatus @default(Pending)
-  orgId     String?
-  org       Organisation?  @relation(fields: [orgId], references: [id])
+  orgId     String
+  org       Organisation   @relation(fields: [orgId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -278,8 +278,8 @@ model LpRequest {
   approvedBy   String?
   approvedAt   DateTime?
   note         String?
-  orgId        String?
-  org          Organisation? @relation(fields: [orgId], references: [id])
+  orgId        String
+  org          Organisation  @relation(fields: [orgId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -301,8 +301,8 @@ model ClaimRequest {
   approvedBy        String?
   approvedAt        DateTime?
   approvalRemarks   String?
-  orgId             String?
-  org               Organisation? @relation(fields: [orgId], references: [id])
+  orgId             String
+  org               Organisation  @relation(fields: [orgId], references: [id])
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

@@ -3,7 +3,10 @@ const { hashPassword } = require("../utils/passwordUtils");
 const { success, created, error, paginate } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 
-const safeUser = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, isActive: u.isActive, createdAt: u.createdAt });
+const safeUser = (u) => ({
+  id: u.id, name: u.name, email: u.email, role: u.role,
+  isActive: u.isActive, orgId: u.orgId ?? null, createdAt: u.createdAt,
+});
 
 const getMe = asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.user.id } });
@@ -14,6 +17,8 @@ const getMe = asyncHandler(async (req, res) => {
 const getUsers = asyncHandler(async (req, res) => {
   const { role, page = 1, limit = 50, search } = req.query;
   const where = {};
+
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
   if (role) where.role = role;
   if (search) where.OR = [
     { name: { contains: search, mode: "insensitive" } },
@@ -29,14 +34,22 @@ const getUsers = asyncHandler(async (req, res) => {
 });
 
 const createUser = asyncHandler(async (req, res) => {
-  const { name, email, role, password } = req.body;
+  const { name, email, role, password, orgId } = req.body;
 
   const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   if (existing) return error(res, "Email already registered", 409);
 
+  // Determine orgId: Admin uses their own org; Super_Admin must supply orgId in body
+  let targetOrgId;
+  if (req.user.role === "Super_Admin") {
+    targetOrgId = orgId || null;
+  } else {
+    targetOrgId = req.user.orgId;
+  }
+
   const passwordHash = await hashPassword(password || "password");
   const user = await prisma.user.create({
-    data: { name, email: email.toLowerCase(), passwordHash, role },
+    data: { name, email: email.toLowerCase(), passwordHash, role, orgId: targetOrgId },
   });
 
   if (role === "Engineer") {
@@ -50,13 +63,21 @@ const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { name, role } = req.body;
 
-  const user = await prisma.user.update({ where: { id }, data: { name, role } });
-  return success(res, safeUser(user), "User updated");
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) return error(res, "User not found", 404);
+  if (req.user.role !== "Super_Admin" && user.orgId !== req.user.orgId) return error(res, "User not found", 404);
+
+  const updated = await prisma.user.update({ where: { id }, data: { name, role } });
+  return success(res, safeUser(updated), "User updated");
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { password } = req.body;
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) return error(res, "User not found", 404);
+  if (req.user.role !== "Super_Admin" && user.orgId !== req.user.orgId) return error(res, "User not found", 404);
 
   const passwordHash = await hashPassword(password);
   await prisma.user.update({ where: { id }, data: { passwordHash } });
@@ -67,26 +88,53 @@ const updateStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { isActive } = req.body;
 
-  const user = await prisma.user.update({ where: { id }, data: { isActive } });
-  return success(res, safeUser(user), `User ${isActive ? "activated" : "deactivated"}`);
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) return error(res, "User not found", 404);
+  if (req.user.role !== "Super_Admin" && user.orgId !== req.user.orgId) return error(res, "User not found", 404);
+
+  const updated = await prisma.user.update({ where: { id }, data: { isActive } });
+  return success(res, safeUser(updated), `User ${isActive ? "activated" : "deactivated"}`);
 });
 
 const getUserEngineers = asyncHandler(async (req, res) => {
-  const engineers = await prisma.user.findMany({
-    where: { role: "Engineer", isActive: true },
-    orderBy: { name: "asc" },
-  });
+  const where = { role: "Engineer", isActive: true };
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
+
+  const engineers = await prisma.user.findMany({ where, orderBy: { name: "asc" } });
   return success(res, engineers.map(safeUser));
 });
 
-// Available to any authenticated user — Engineers need this to pick their TL when submitting LP requests
 const getTeamLeaders = asyncHandler(async (req, res) => {
+  const where = { role: "Team_Leader", isActive: true };
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
+
   const tls = await prisma.user.findMany({
-    where: { role: "Team_Leader", isActive: true },
+    where,
     select: { id: true, name: true, email: true },
     orderBy: { name: "asc" },
   });
   return success(res, tls);
 });
 
-module.exports = { getMe, getUsers, createUser, updateUser, resetPassword, updateStatus, getUserEngineers, getTeamLeaders };
+// Super_Admin only: assign or move a user to a different organisation
+const assignOrganisation = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { orgId } = req.body;
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) return error(res, "User not found", 404);
+
+  if (orgId) {
+    const org = await prisma.organisation.findUnique({ where: { id: orgId } });
+    if (!org) return error(res, "Organisation not found", 404);
+    if (!org.isActive) return error(res, "Organisation is inactive", 400);
+  }
+
+  const updated = await prisma.user.update({ where: { id }, data: { orgId: orgId || null } });
+  return success(res, safeUser(updated), "User organisation updated");
+});
+
+module.exports = {
+  getMe, getUsers, createUser, updateUser, resetPassword,
+  updateStatus, getUserEngineers, getTeamLeaders, assignOrganisation,
+};

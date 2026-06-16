@@ -36,7 +36,10 @@ const engineerDashboard = asyncHandler(async (req, res) => {
 
 const teamLeaderDashboard = asyncHandler(async (req, res) => {
   const { start, end } = getMonthRange();
-  const engineers = await prisma.user.findMany({ where: { role: "Engineer", isActive: true }, orderBy: { name: "asc" } });
+  const engWhere = { role: "Engineer", isActive: true };
+  if (req.user.role !== "Super_Admin") engWhere.orgId = req.user.orgId;
+
+  const engineers = await prisma.user.findMany({ where: engWhere, orderBy: { name: "asc" } });
 
   const data = await Promise.all(
     engineers.map(async (eng) => {
@@ -58,11 +61,14 @@ const teamLeaderDashboard = asyncHandler(async (req, res) => {
 });
 
 const storeDashboard = asyncHandler(async (req, res) => {
+  const orgWhere = req.user.role !== "Super_Admin" ? { orgId: req.user.orgId } : {};
+
   const [pendingStockRequests, pendingPurchaseInward, mainInventory, recentPurchase] = await Promise.all([
-    prisma.stockRequest.count({ where: { status: "Pending" } }),
-    prisma.purchaseInward.count({ where: { status: "Pending" } }),
-    prisma.mainInventory.findMany({ include: { sku: true } }),
+    prisma.stockRequest.count({ where: { status: "Pending", ...orgWhere } }),
+    prisma.purchaseInward.count({ where: { status: "Pending", ...orgWhere } }),
+    prisma.mainInventory.findMany({ where: orgWhere, include: { sku: true } }),
     prisma.purchaseInward.findMany({
+      where: orgWhere,
       orderBy: { createdAt: "desc" },
       take: 6,
       include: { sku: { select: { id: true, name: true } } },
@@ -79,10 +85,12 @@ const storeDashboard = asyncHandler(async (req, res) => {
 });
 
 const adminDashboard = asyncHandler(async (req, res) => {
+  const orgWhere = req.user.role !== "Super_Admin" ? { orgId: req.user.orgId } : {};
+
   const [pendingProductivity, pendingPurchase, pendingRevoke] = await Promise.all([
-    prisma.productivityLog.count({ where: { status: "Validated" } }),
-    prisma.purchaseInward.count({ where: { status: "Pending" } }),
-    prisma.revokeRequest.count({ where: { status: "Revoke_Pending" } }),
+    prisma.productivityLog.count({ where: { status: "Validated", ...orgWhere } }),
+    prisma.purchaseInward.count({ where: { status: "Pending", ...orgWhere } }),
+    prisma.revokeRequest.count({ where: { status: "Revoke_Pending", ...orgWhere } }),
   ]);
 
   return success(res, { pendingProductivity, pendingPurchase, pendingRevoke });

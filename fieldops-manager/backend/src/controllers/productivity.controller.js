@@ -6,6 +6,8 @@ const buildWhere = (req) => {
   const { engineerId, month, status } = req.query;
   const where = {};
 
+  if (req.user.role !== "Super_Admin") where.orgId = req.user.orgId;
+
   if (req.user.role === "Engineer") {
     where.engineerId = req.user.id;
   } else if (engineerId) {
@@ -41,6 +43,7 @@ const getLogs = asyncHandler(async (req, res) => {
 const createLog = asyncHandler(async (req, res) => {
   const { date, callsClosed, items = [] } = req.body;
   const engineerId = req.user.id;
+  const orgId = req.user.orgId;
 
   const logDate = new Date(date);
 
@@ -52,6 +55,7 @@ const createLog = asyncHandler(async (req, res) => {
   const log = await prisma.productivityLog.create({
     data: {
       engineerId,
+      orgId,
       date: logDate,
       callsClosed: callsClosed || 0,
       status: "Pending",
@@ -75,6 +79,7 @@ const validateLog = asyncHandler(async (req, res) => {
 
   const log = await prisma.productivityLog.findUnique({ where: { id } });
   if (!log) return error(res, "Log not found", 404);
+  if (req.user.role !== "Super_Admin" && log.orgId !== req.user.orgId) return error(res, "Log not found", 404);
   if (log.status !== "Pending") return error(res, "Only Pending logs can be validated", 400);
 
   const updated = await prisma.productivityLog.update({
@@ -91,6 +96,7 @@ const rejectTL = asyncHandler(async (req, res) => {
 
   const log = await prisma.productivityLog.findUnique({ where: { id } });
   if (!log) return error(res, "Log not found", 404);
+  if (req.user.role !== "Super_Admin" && log.orgId !== req.user.orgId) return error(res, "Log not found", 404);
   if (log.status !== "Pending") return error(res, "Only Pending logs can be rejected by TL", 400);
 
   const updated = await prisma.productivityLog.update({
@@ -110,10 +116,10 @@ const approveLog = asyncHandler(async (req, res) => {
     include: { items: true },
   });
   if (!log) return error(res, "Log not found", 404);
+  if (req.user.role !== "Super_Admin" && log.orgId !== req.user.orgId) return error(res, "Log not found", 404);
   if (log.status !== "Validated") return error(res, "Only Validated logs can be approved", 400);
 
   await prisma.$transaction(async (tx) => {
-    // Update adminIncentive per item
     for (const itemUpdate of items) {
       await tx.productivityItem.update({
         where: { id: itemUpdate.id },
@@ -121,13 +127,11 @@ const approveLog = asyncHandler(async (req, res) => {
       });
     }
 
-    // Approve log
     await tx.productivityLog.update({
       where: { id },
       data: { status: "Approved", adminNote: adminNote || "" },
     });
 
-    // Mark attendance Present
     await tx.attendance.upsert({
       where: { engineerId_date: { engineerId: log.engineerId, date: log.date } },
       update: { status: "Present" },
@@ -136,10 +140,10 @@ const approveLog = asyncHandler(async (req, res) => {
         date: log.date,
         status: "Present",
         productivityLogId: log.id,
+        orgId: log.orgId,
       },
     });
 
-    // Deduct from engineer stock
     for (const item of log.items) {
       const existing = await tx.engineerStock.findUnique({
         where: { engineerId_skuId: { engineerId: log.engineerId, skuId: item.skuId } },
@@ -163,6 +167,7 @@ const rejectAdmin = asyncHandler(async (req, res) => {
 
   const log = await prisma.productivityLog.findUnique({ where: { id } });
   if (!log) return error(res, "Log not found", 404);
+  if (req.user.role !== "Super_Admin" && log.orgId !== req.user.orgId) return error(res, "Log not found", 404);
   if (log.status !== "Validated") return error(res, "Only Validated logs can be rejected by Admin", 400);
 
   const updated = await prisma.productivityLog.update({
