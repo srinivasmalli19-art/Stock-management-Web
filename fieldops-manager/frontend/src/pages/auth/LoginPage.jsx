@@ -22,10 +22,12 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data) => {
+    console.log("LOGIN BUTTON CLICKED", data.email);
     setLoading(true);
     try {
       await login(data.email, data.password);
     } catch (err) {
+      console.error("LOGIN ERROR", err?.response?.status, err?.message, err);
       const msg = err?.response?.data?.message || "Invalid credentials";
       toast.error(msg);
     } finally {

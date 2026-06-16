@@ -44,19 +44,24 @@ export function AuthProvider({ children }) {
   }, [fetchMe]);
 
   const login = useCallback(async (email, password) => {
-    console.log("[Auth] login: calling /auth/login");
     const res = await api.post("/auth/login", { email, password });
+    console.log("LOGIN RESPONSE", res.data);
+
     const { accessToken, user } = res.data.data;
-    console.log("[Auth] login: success, role =", user.role, "orgId =", user.orgId);
+
     localStorage.setItem("accessToken", accessToken);
     api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
-    const dest = ROLE_DEFAULT_ROUTES[user.role] || "/";
-    console.log("[Auth] login: navigating to", dest);
-    // flushSync commits the state update before navigate() fires so ProtectedRoute
-    // never sees currentUser=null when it renders the destination route.
+    console.log("TOKEN SAVED", { role: user?.role, orgId: user?.orgId });
+
+    // flushSync commits currentUser before navigate() fires so ProtectedRoute
+    // never sees currentUser=null when it evaluates the destination route.
     flushSync(() => {
       setCurrentUser(user);
     });
+    console.log("CURRENT USER SET", user?.role);
+
+    const dest = ROLE_DEFAULT_ROUTES[user.role] || "/";
+    console.log("NAVIGATING TO", dest);
     navigate(dest);
     return user;
   }, [navigate]);
