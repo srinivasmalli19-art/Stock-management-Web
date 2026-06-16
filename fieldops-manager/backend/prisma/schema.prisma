@@ -7,7 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
 enum Role {
+  Super_Admin
   Admin
   Store_Manager
   Team_Leader
@@ -46,6 +49,31 @@ enum RevokeStatus {
   Rejected
 }
 
+// ─── Organisation ─────────────────────────────────────────────────────────────
+
+model Organisation {
+  id        String  @id @default(cuid())
+  name      String
+  siteCode  String  @unique
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users            User[]
+  skus             Sku[]
+  mainInventory    MainInventory[]
+  engineerStock    EngineerStock[]
+  productivityLogs ProductivityLog[]
+  attendance       Attendance[]
+  stockRequests    StockRequest[]
+  revokeRequests   RevokeRequest[]
+  purchaseInward   PurchaseInward[]
+  lpRequests       LpRequest[]
+  claimRequests    ClaimRequest[]
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -53,6 +81,9 @@ model User {
   passwordHash String
   role         Role     @default(Engineer)
   isActive     Boolean  @default(true)
+  // orgId is nullable: Super_Admin has global access (orgId = null)
+  orgId        String?
+  org          Organisation? @relation(fields: [orgId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -61,12 +92,20 @@ model User {
   stockRequests    StockRequest[]
   attendance       Attendance[]
   refreshTokens    RefreshToken[]
+
+  @@index([orgId])
+  @@index([orgId, role])
+  @@index([orgId, isActive])
 }
 
+// ─── SKUs & Inventory ─────────────────────────────────────────────────────────
+
 model Sku {
-  id            String   @id
+  id            String  @id
   name          String
-  lowStockAlert Int      @default(0)
+  lowStockAlert Int     @default(0)
+  orgId         String?
+  org           Organisation? @relation(fields: [orgId], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -75,28 +114,40 @@ model Sku {
   productivityItems ProductivityItem[]
   stockRequests     StockRequest[]
   purchaseInward    PurchaseInward[]
+
+  @@index([orgId])
 }
 
 model MainInventory {
-  id        String   @id @default(cuid())
-  skuId     String   @unique
-  sku       Sku      @relation(fields: [skuId], references: [id])
-  qty       Int      @default(0)
-  unitPrice Float    @default(0)
+  id        String  @id @default(cuid())
+  skuId     String  @unique
+  sku       Sku     @relation(fields: [skuId], references: [id])
+  qty       Int     @default(0)
+  unitPrice Float   @default(0)
+  orgId     String?
+  org       Organisation? @relation(fields: [orgId], references: [id])
   updatedAt DateTime @updatedAt
+
+  @@index([orgId])
 }
 
 model EngineerStock {
-  id         String   @id @default(cuid())
+  id         String  @id @default(cuid())
   engineerId String
-  engineer   User     @relation(fields: [engineerId], references: [id])
+  engineer   User    @relation(fields: [engineerId], references: [id])
   skuId      String
-  sku        Sku      @relation(fields: [skuId], references: [id])
-  qty        Int      @default(0)
+  sku        Sku     @relation(fields: [skuId], references: [id])
+  qty        Int     @default(0)
+  orgId      String?
+  org        Organisation? @relation(fields: [orgId], references: [id])
   updatedAt  DateTime @updatedAt
 
   @@unique([engineerId, skuId])
+  @@index([orgId])
+  @@index([orgId, engineerId])
 }
+
+// ─── Productivity ─────────────────────────────────────────────────────────────
 
 model ProductivityLog {
   id          String             @id @default(cuid())
@@ -107,13 +158,18 @@ model ProductivityLog {
   status      ProductivityStatus @default(Pending)
   tlNote      String?
   adminNote   String?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  orgId       String?
+  org         Organisation?      @relation(fields: [orgId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   items      ProductivityItem[]
   attendance Attendance?
 
   @@unique([engineerId, date])
+  @@index([orgId])
+  @@index([orgId, date])
+  @@index([orgId, status])
 }
 
 model ProductivityItem {
@@ -127,6 +183,8 @@ model ProductivityItem {
   adminIncentive    Float?
 }
 
+// ─── Attendance ───────────────────────────────────────────────────────────────
+
 model Attendance {
   id                String           @id @default(cuid())
   engineerId        String
@@ -135,9 +193,15 @@ model Attendance {
   status            AttendanceStatus @default(Present)
   productivityLogId String?          @unique
   log               ProductivityLog? @relation(fields: [productivityLogId], references: [id])
+  orgId             String?
+  org               Organisation?    @relation(fields: [orgId], references: [id])
 
   @@unique([engineerId, date])
+  @@index([orgId])
+  @@index([orgId, date])
 }
+
+// ─── Stock Requests ───────────────────────────────────────────────────────────
 
 model StockRequest {
   id         String             @id @default(cuid())
@@ -148,11 +212,35 @@ model StockRequest {
   qty        Int
   status     StockRequestStatus @default(Pending)
   note       String?
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
+  orgId      String?
+  org        Organisation?      @relation(fields: [orgId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   revokeRequest RevokeRequest?
+
+  @@index([orgId])
+  @@index([orgId, status])
 }
+
+model RevokeRequest {
+  id             String       @id @default(cuid())
+  stockRequestId String       @unique
+  stockRequest   StockRequest @relation(fields: [stockRequestId], references: [id])
+  engineerId     String
+  skuId          String
+  qty            Int
+  status         RevokeStatus @default(Revoke_Pending)
+  orgId          String?
+  org            Organisation? @relation(fields: [orgId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([orgId, status])
+}
+
+// ─── Purchase Inward ──────────────────────────────────────────────────────────
 
 model PurchaseInward {
   id        String         @id @default(cuid())
@@ -164,45 +252,43 @@ model PurchaseInward {
   invoiceNo String
   date      DateTime       @db.Date
   status    PurchaseStatus @default(Pending)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  orgId     String?
+  org       Organisation?  @relation(fields: [orgId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([orgId, status])
 }
 
-model RevokeRequest {
-  id             String       @id @default(cuid())
-  stockRequestId String       @unique
-  stockRequest   StockRequest @relation(fields: [stockRequestId], references: [id])
-  engineerId     String
-  skuId          String
-  qty            Int
-  status         RevokeStatus @default(Revoke_Pending)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-}
+// ─── LP & Claim Requests ──────────────────────────────────────────────────────
 
-// LP Request — created by Team Leader, approved/rejected by Admin
 model LpRequest {
-  id           String       @id @default(cuid())
-  requestId    String       @unique
+  id           String        @id @default(cuid())
+  requestId    String        @unique
   jobId        String
   spareCost    Float
   serviceCost  Float
   totalCost    Float
   description  String
   tlEmail      String
-  requestDate  DateTime     @db.Date
-  status       String       @default("LP_PENDING_ADMIN_APPROVAL")
+  requestDate  DateTime      @db.Date
+  status       String        @default("LP_PENDING_ADMIN_APPROVAL")
   adminRemarks String?
   approvedBy   String?
   approvedAt   DateTime?
   note         String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  orgId        String?
+  org          Organisation? @relation(fields: [orgId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  claim        ClaimRequest?
+  claim ClaimRequest?
+
+  @@index([orgId])
+  @@index([orgId, status])
 }
 
-// Claim Request — raised by TL after LP approved, validated by Store, approved by Admin
 model ClaimRequest {
   id                String    @id @default(cuid())
   lpRequestId       String    @unique
@@ -215,11 +301,18 @@ model ClaimRequest {
   approvedBy        String?
   approvedAt        DateTime?
   approvalRemarks   String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  orgId             String?
+  org               Organisation? @relation(fields: [orgId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  lpRequest         LpRequest @relation(fields: [lpRequestId], references: [id])
+  lpRequest LpRequest @relation(fields: [lpRequestId], references: [id])
+
+  @@index([orgId])
+  @@index([orgId, status])
 }
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 
 model RefreshToken {
   id        String   @id @default(cuid())
