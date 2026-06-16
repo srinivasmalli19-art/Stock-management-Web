@@ -23,6 +23,8 @@ const dashboardRoutes = require("./src/routes/dashboard.routes");
 const lpRequestRoutes = require("./src/routes/lpRequest.routes");
 const claimRequestRoutes = require("./src/routes/claimRequest.routes");
 const organisationRoutes = require("./src/routes/organisation.routes");
+const staffAttendanceRoutes = require("./src/routes/staffAttendance.routes");
+const attendanceLedgerRoutes = require("./src/routes/attendanceLedger.routes");
 
 const app = express();
 
@@ -81,6 +83,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/lp-requests", lpRequestRoutes);
 app.use("/api/claim-requests", claimRequestRoutes);
 app.use("/api/organisations", organisationRoutes);
+app.use("/api/staff-attendance", staffAttendanceRoutes);
+app.use("/api/attendance-ledger", attendanceLedgerRoutes);
 
 app.get("/health", (req, res) =>
   res.json({

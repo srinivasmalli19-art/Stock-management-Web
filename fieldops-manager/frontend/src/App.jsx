@@ -14,6 +14,7 @@ import EngVanStock from "./pages/engineer/EngVanStock";
 import TLDashboard from "./pages/teamleader/TLDashboard";
 import TLValidationQueue from "./pages/teamleader/TLValidationQueue";
 import TLLPRequests from "./pages/teamleader/TLLPRequests";
+import TLAttendance from "./pages/teamleader/TLAttendance";
 
 // Store Manager
 import StoreDashboard from "./pages/storemanager/StoreDashboard";
@@ -21,6 +22,7 @@ import StorePurchaseInward from "./pages/storemanager/StorePurchaseInward";
 import StoreStockRequests from "./pages/storemanager/StoreStockRequests";
 import StoreInventoryReport from "./pages/storemanager/StoreInventoryReport";
 import StoreLPRequests from "./pages/storemanager/StoreLPRequests";
+import StoreAttendance from "./pages/storemanager/StoreAttendance";
 
 // Super Admin
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
@@ -38,6 +40,8 @@ import AdminPLReport from "./pages/admin/AdminPLReport";
 import AdminSkuRegistry from "./pages/admin/AdminSkuRegistry";
 import AdminUserRegistry from "./pages/admin/AdminUserRegistry";
 import AdminLPApprovals from "./pages/admin/AdminLPApprovals";
+import AdminAttendanceApproval from "./pages/admin/AdminAttendanceApproval";
+import AdminAttendanceLedger from "./pages/admin/AdminAttendanceLedger";
 
 const ROOT_ROUTES = {
   Super_Admin: "/superadmin/dashboard",
@@ -77,6 +81,7 @@ export default function App() {
             <Route path="/tl/dashboard" element={<TLDashboard />} />
             <Route path="/tl/approvals" element={<TLValidationQueue />} />
             <Route path="/tl/lp-requests" element={<TLLPRequests />} />
+            <Route path="/tl/attendance" element={<TLAttendance />} />
 
             {/* Store Manager */}
             <Route path="/store/dashboard" element={<StoreDashboard />} />
@@ -84,6 +89,7 @@ export default function App() {
             <Route path="/store/requests" element={<StoreStockRequests />} />
             <Route path="/store/inventory" element={<StoreInventoryReport />} />
             <Route path="/store/lp-requests" element={<StoreLPRequests />} />
+            <Route path="/store/attendance" element={<StoreAttendance />} />
 
             {/* Admin */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -91,6 +97,8 @@ export default function App() {
             <Route path="/admin/purchase-approvals" element={<AdminPurchaseApprovals />} />
             <Route path="/admin/revoke-approvals" element={<AdminRevokeApprovals />} />
             <Route path="/admin/lp-approvals" element={<AdminLPApprovals />} />
+            <Route path="/admin/attendance-approval" element={<AdminAttendanceApproval />} />
+            <Route path="/admin/attendance-ledger" element={<AdminAttendanceLedger />} />
             <Route path="/admin/attendance" element={<AdminAttendance />} />
             <Route path="/admin/inventory" element={<AdminInventory />} />
             <Route path="/admin/pl-report" element={<AdminPLReport />} />

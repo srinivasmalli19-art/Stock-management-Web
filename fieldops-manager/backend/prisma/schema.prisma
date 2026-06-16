@@ -59,17 +59,19 @@ model Organisation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users            User[]
-  skus             Sku[]
-  mainInventory    MainInventory[]
-  engineerStock    EngineerStock[]
-  productivityLogs ProductivityLog[]
-  attendance       Attendance[]
-  stockRequests    StockRequest[]
-  revokeRequests   RevokeRequest[]
-  purchaseInward   PurchaseInward[]
-  lpRequests       LpRequest[]
-  claimRequests    ClaimRequest[]
+  users              User[]
+  skus               Sku[]
+  mainInventory      MainInventory[]
+  engineerStock      EngineerStock[]
+  productivityLogs   ProductivityLog[]
+  attendance         Attendance[]
+  stockRequests      StockRequest[]
+  revokeRequests     RevokeRequest[]
+  purchaseInward     PurchaseInward[]
+  lpRequests         LpRequest[]
+  claimRequests      ClaimRequest[]
+  staffAttendance    StaffAttendance[]
+  attendanceLedger   AttendanceLedger[]
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -91,6 +93,7 @@ model User {
   productivityLogs ProductivityLog[]
   stockRequests    StockRequest[]
   attendance       Attendance[]
+  staffAttendance  StaffAttendance[]
   refreshTokens    RefreshToken[]
 
   @@index([orgId])
@@ -310,6 +313,56 @@ model ClaimRequest {
 
   @@index([orgId])
   @@index([orgId, status])
+}
+
+// ─── Staff Attendance (TL / SM approval workflow) ────────────────────────────
+
+model StaffAttendance {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  date             DateTime  @db.Date
+  attendanceStatus String    @default("Present") // Present | Absent | Half_Day | Leave
+  remarks          String?
+  submissionStatus String    @default("Pending")  // Pending | Approved | Rejected
+  approvedById     String?
+  approvedByName   String?
+  approvedAt       DateTime?
+  rejectedReason   String?
+  orgId            String
+  org              Organisation @relation(fields: [orgId], references: [id])
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  ledgerEntry AttendanceLedger?
+
+  @@unique([userId, date])
+  @@index([orgId])
+  @@index([orgId, submissionStatus])
+  @@index([userId])
+}
+
+model AttendanceLedger {
+  id                String          @id @default(cuid())
+  staffAttendanceId String          @unique
+  staffAttendance   StaffAttendance @relation(fields: [staffAttendanceId], references: [id])
+  userId            String
+  userName          String
+  role              String
+  orgId             String
+  org               Organisation    @relation(fields: [orgId], references: [id])
+  date              DateTime        @db.Date
+  attendanceStatus  String
+  remarks           String?
+  approvedById      String
+  approvedByName    String
+  approvedAt        DateTime
+  createdAt         DateTime        @default(now())
+
+  @@index([orgId])
+  @@index([orgId, date])
+  @@index([userId])
+  @@index([orgId, userId])
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
