@@ -28,6 +28,7 @@ import StoreAttendance from "./pages/storemanager/StoreAttendance";
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 import SuperAdminOrgs from "./pages/superadmin/SuperAdminOrgs";
 import SuperAdminUsers from "./pages/superadmin/SuperAdminUsers";
+import SuperAdminAuditLogs from "./pages/superadmin/SuperAdminAuditLogs";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -42,6 +43,7 @@ import AdminUserRegistry from "./pages/admin/AdminUserRegistry";
 import AdminLPApprovals from "./pages/admin/AdminLPApprovals";
 import AdminAttendanceApproval from "./pages/admin/AdminAttendanceApproval";
 import AdminAttendanceLedger from "./pages/admin/AdminAttendanceLedger";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 
 const ROOT_ROUTES = {
   Super_Admin: "/superadmin/dashboard",
@@ -70,6 +72,7 @@ export default function App() {
             <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
             <Route path="/superadmin/organisations" element={<SuperAdminOrgs />} />
             <Route path="/superadmin/users" element={<SuperAdminUsers />} />
+            <Route path="/superadmin/audit-logs" element={<SuperAdminAuditLogs />} />
 
             {/* Engineer */}
             <Route path="/engineer/dashboard" element={<EngDashboard />} />
@@ -104,6 +107,7 @@ export default function App() {
             <Route path="/admin/pl-report" element={<AdminPLReport />} />
             <Route path="/admin/skus" element={<AdminSkuRegistry />} />
             <Route path="/admin/users" element={<AdminUserRegistry />} />
+            <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
           </Route>
         </Route>
 

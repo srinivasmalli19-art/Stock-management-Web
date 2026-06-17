@@ -4,6 +4,7 @@ export const NAV_ITEMS = {
     { page: "/superadmin/dashboard", icon: "ti-layout-dashboard", label: "SA Dashboard" },
     { page: "/superadmin/organisations", icon: "ti-building", label: "Organisations" },
     { page: "/superadmin/users", icon: "ti-users", label: "All Users" },
+    { page: "/superadmin/audit-logs", icon: "ti-shield-check", label: "Global Audit Logs" },
   ],
   Admin: [
     { page: "/admin/dashboard", icon: "ti-layout-dashboard", label: "Dashboard" },
@@ -21,6 +22,7 @@ export const NAV_ITEMS = {
     { section: "Settings" },
     { page: "/admin/skus", icon: "ti-tag", label: "SKU Registry" },
     { page: "/admin/users", icon: "ti-users", label: "User Registry" },
+    { page: "/admin/audit-logs", icon: "ti-shield-check", label: "Audit Logs" },
   ],
   Store_Manager: [
     { section: "Operations" },

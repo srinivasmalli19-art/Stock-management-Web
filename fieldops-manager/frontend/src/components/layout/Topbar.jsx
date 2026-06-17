@@ -26,6 +26,8 @@ const PAGE_TITLES = {
   "/admin/attendance-approval": "Attendance Approval",
   "/admin/attendance-ledger": "Attendance Ledger",
   "/admin/lp-approvals": "LP & Claim Approvals",
+  "/admin/audit-logs": "Audit Logs",
+  "/superadmin/audit-logs": "Global Audit Logs",
   "/engineer/dashboard": "My Dashboard",
   "/engineer/productivity": "Log Productivity",
   "/engineer/status": "Approval Status",
