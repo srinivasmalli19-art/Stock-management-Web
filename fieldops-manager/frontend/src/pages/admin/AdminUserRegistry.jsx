@@ -69,6 +69,7 @@ export default function AdminUserRegistry() {
   const handleCreate = () => {
     if (!newUser.name || !newUser.email) { toast.error("Enter name and email"); return; }
     if (!newUser.password) { toast.error("Enter a password"); return; }
+    if (newUser.password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     createMutation.mutate(newUser);
   };
 
@@ -79,6 +80,7 @@ export default function AdminUserRegistry() {
 
   const handleSave = () => {
     if (!editForm.name) { toast.error("Name cannot be empty"); return; }
+    if (editForm.newPassword && editForm.newPassword.length < 8) { toast.error("New password must be at least 8 characters"); return; }
     updateMutation.mutate({ id: editUser.id, data: editForm, newPassword: editForm.newPassword });
   };
 
@@ -162,7 +164,7 @@ export default function AdminUserRegistry() {
                 className={inputClass}
                 value={newUser.password}
                 onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                placeholder="Set initial password"
+                placeholder="Min 8 characters"
               />
               <Button size="sm" onClick={() => setNewUser({ ...newUser, password: genPassword() })}>
                 <i className="ti ti-refresh" />

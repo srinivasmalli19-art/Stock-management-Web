@@ -47,7 +47,7 @@ const createUser = asyncHandler(async (req, res) => {
     targetOrgId = req.user.orgId;
   }
 
-  const passwordHash = await hashPassword(password || "password");
+  const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
     data: { name, email: email.toLowerCase(), passwordHash, role, orgId: targetOrgId },
   });

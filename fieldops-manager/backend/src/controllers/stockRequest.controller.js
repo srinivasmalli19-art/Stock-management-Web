@@ -50,15 +50,19 @@ const approveRequest = asyncHandler(async (req, res) => {
   if (request.status !== "Pending") return error(res, "Only Pending requests can be approved", 400);
 
   const inv = await prisma.mainInventory.findUnique({ where: { skuId: request.skuId } });
-  const warning = inv && inv.qty < request.qty ? `Warning: Only ${inv.qty} units available` : null;
+
+  if (!inv) {
+    return error(res, "Cannot approve: no inventory record found for this SKU", 400);
+  }
+  if (inv.qty < request.qty) {
+    return error(res, `Cannot approve: only ${inv.qty} unit(s) available, ${request.qty} requested`, 400);
+  }
 
   await prisma.$transaction(async (tx) => {
-    if (inv) {
-      await tx.mainInventory.update({
-        where: { skuId: request.skuId },
-        data: { qty: Math.max(0, inv.qty - request.qty) },
-      });
-    }
+    await tx.mainInventory.update({
+      where: { skuId: request.skuId },
+      data: { qty: inv.qty - request.qty },
+    });
 
     const existing = await tx.engineerStock.findUnique({
       where: { engineerId_skuId: { engineerId: request.engineerId, skuId: request.skuId } },
@@ -77,7 +81,7 @@ const approveRequest = asyncHandler(async (req, res) => {
     await tx.stockRequest.update({ where: { id }, data: { status: "Approved" } });
   });
 
-  return success(res, {}, warning ? `Approved with warning: ${warning}` : `Approved! ${request.qty} units allocated to engineer.`);
+  return success(res, {}, `Approved! ${request.qty} units allocated to engineer.`);
 });
 
 const rejectRequest = asyncHandler(async (req, res) => {

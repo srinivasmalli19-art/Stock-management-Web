@@ -32,10 +32,18 @@ const createClaimRequest = asyncHandler(async (req, res) => {
   if (lp.claim)
     return error(res, "A claim has already been raised for this LP request", 400);
 
+  const amount = Number(claimAmount);
+  if (isNaN(amount) || amount <= 0) {
+    return error(res, "Claim amount must be a positive number", 400);
+  }
+  if (amount > lp.totalCost) {
+    return error(res, `Claim amount (₹${amount}) cannot exceed LP total cost (₹${lp.totalCost})`, 400);
+  }
+
   const claim = await prisma.claimRequest.create({
     data: {
       lpRequestId,
-      claimAmount: Number(claimAmount),
+      claimAmount: amount,
       remarks,
       status: "CLAIM_VALIDATION_PENDING",
       orgId,

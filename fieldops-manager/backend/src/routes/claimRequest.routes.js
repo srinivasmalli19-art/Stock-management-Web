@@ -12,7 +12,7 @@ router.use(requireOrg);
 
 const createSchema = Joi.object({
   lpRequestId: Joi.string().required(),
-  claimAmount: Joi.number().min(0).required(),
+  claimAmount: Joi.number().positive().required(),
   remarks: Joi.string().min(1).required(),
 });
 

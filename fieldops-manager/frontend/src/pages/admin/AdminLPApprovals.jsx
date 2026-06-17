@@ -92,13 +92,40 @@ export default function AdminLPApprovals() {
   const handleExport = () => {
     if (tab === "claim-pending" || (tab === "history" && claimList.length > 0)) {
       const all = claimData || [];
-      const headers = ["LP Reference", "Job ID", "Team Leader", "Claim Amount", "Status", "Submitted Date"];
-      const rows = all.map((c) => [c.lpRequest?.requestId, c.lpRequest?.jobId, c.lpRequest?.tlEmail, c.claimAmount, c.status.replace(/_/g, " "), formatDate(c.createdAt)]);
+      const headers = [
+        "LP Reference", "Job ID", "Team Leader", "Claim Amount", "Status",
+        "TL Remarks", "Store Validation Remarks", "Admin Remarks", "Submitted Date",
+      ];
+      const rows = all.map((c) => [
+        c.lpRequest?.requestId,
+        c.lpRequest?.jobId,
+        c.lpRequest?.tlEmail,
+        c.claimAmount,
+        c.status.replace(/_/g, " "),
+        c.remarks || "",
+        c.validationRemarks || "",
+        c.approvalRemarks || "",
+        formatDate(c.createdAt),
+      ]);
       triggerDownload(buildCsvBlob(headers, rows), `claims-${todayStr()}.csv`);
     } else {
       const all = lpData || [];
-      const headers = ["Request ID", "Job ID", "Team Leader", "Date", "Spare", "Service", "Total", "Status", "Remarks"];
-      const rows = all.map((r) => [r.requestId, r.jobId, r.tlEmail, formatDate(r.requestDate), r.spareCost, r.serviceCost, r.totalCost, r.status.replace(/_/g, " "), r.adminRemarks || ""]);
+      const headers = [
+        "Request ID", "Job ID", "Team Leader", "Date", "Spare", "Service", "Total",
+        "Description", "Status", "Admin Remarks",
+      ];
+      const rows = all.map((r) => [
+        r.requestId,
+        r.jobId,
+        r.tlEmail,
+        formatDate(r.requestDate),
+        r.spareCost,
+        r.serviceCost,
+        r.totalCost,
+        r.description || "",
+        r.status.replace(/_/g, " "),
+        r.adminRemarks || "",
+      ]);
       triggerDownload(buildCsvBlob(headers, rows), `lp-requests-${todayStr()}.csv`);
     }
   };

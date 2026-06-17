@@ -17,7 +17,7 @@ const createSchema = Joi.object({
   name: Joi.string().min(2).required(),
   email: Joi.string().email().required(),
   role: Joi.string().valid("Engineer", "Team_Leader", "Store_Manager", "Admin").required(),
-  password: Joi.string().min(4).optional(),
+  password: Joi.string().min(8).required(),
   orgId: Joi.string().optional(), // Super_Admin may supply target org
 });
 
@@ -26,7 +26,7 @@ const updateSchema = Joi.object({
   role: Joi.string().valid("Engineer", "Team_Leader", "Store_Manager", "Admin").optional(),
 });
 
-const pwSchema = Joi.object({ password: Joi.string().min(4).required() });
+const pwSchema = Joi.object({ password: Joi.string().min(8).required() });
 const statusSchema = Joi.object({ isActive: Joi.boolean().required() });
 const orgSchema = Joi.object({ orgId: Joi.string().allow(null).optional() });
 
