@@ -1,6 +1,7 @@
 const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
 
 function generateRequestId() {
   const now = new Date();
@@ -45,6 +46,7 @@ const createLpRequest = asyncHandler(async (req, res) => {
     },
     include: { claim: true },
   });
+  await writeAudit({ req, action: "LP_CREATED", entityType: "LpRequest", entityId: request.id, newValue: { requestId: request.requestId, jobId, totalCost: request.totalCost } });
   return created(res, request, "LP request submitted for Admin approval");
 });
 
@@ -71,6 +73,8 @@ const adminApproveLp = asyncHandler(async (req, res) => {
     include: { claim: true },
   });
 
+  const auditAction = action === "approve" ? "LP_APPROVED" : "LP_REJECTED";
+  await writeAudit({ req, action: auditAction, entityType: "LpRequest", entityId: id, oldValue: { status: request.status }, newValue: { status: newStatus, remarks: remarks || null } });
   const msg = action === "approve"
     ? "LP request approved. Team Leader can now raise a claim."
     : "LP request rejected.";

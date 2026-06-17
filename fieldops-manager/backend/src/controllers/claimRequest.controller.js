@@ -1,6 +1,7 @@
 const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
 
 const getClaimRequests = asyncHandler(async (req, res) => {
   const where = {};
@@ -50,6 +51,7 @@ const createClaimRequest = asyncHandler(async (req, res) => {
     },
     include: { lpRequest: true },
   });
+  await writeAudit({ req, action: "CLAIM_CREATED", entityType: "ClaimRequest", entityId: claim.id, newValue: { lpRequestId, claimAmount: amount } });
   return created(res, claim, "Claim request submitted for Store Manager validation");
 });
 
@@ -76,6 +78,8 @@ const validateClaim = asyncHandler(async (req, res) => {
     include: { lpRequest: true },
   });
 
+  const validateAuditAction = action === "validate" ? "CLAIM_VALIDATED" : "CLAIM_REJECTED";
+  await writeAudit({ req, action: validateAuditAction, entityType: "ClaimRequest", entityId: id, oldValue: { status: claim.status }, newValue: { status: newStatus, remarks: remarks || null } });
   const msg = action === "validate"
     ? "Claim validated and forwarded to Admin"
     : "Claim rejected by Store Manager";
@@ -105,6 +109,8 @@ const adminApproveClaim = asyncHandler(async (req, res) => {
     include: { lpRequest: true },
   });
 
+  const adminAuditAction = action === "approve" ? "CLAIM_APPROVED" : "CLAIM_REJECTED";
+  await writeAudit({ req, action: adminAuditAction, entityType: "ClaimRequest", entityId: id, oldValue: { status: claim.status }, newValue: { status: newStatus, remarks: remarks || null } });
   return success(res, updated, action === "approve" ? "Claim approved!" : "Claim rejected");
 });
 

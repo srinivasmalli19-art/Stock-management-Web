@@ -1,6 +1,7 @@
 const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
 
 const VALID_STATUSES = ["Present", "Absent", "Half_Day", "Leave"];
 
@@ -34,7 +35,7 @@ const submitAttendance = asyncHandler(async (req, res) => {
     },
   });
 
-  console.log(`[AUDIT] ATTENDANCE_SUBMITTED userId=${userId} name="${name}" role=${role} date=${dateStr} status=${attendanceStatus}`);
+  await writeAudit({ req, action: "ATTENDANCE_SUBMITTED", entityType: "StaffAttendance", entityId: record.id, newValue: { date: dateStr, attendanceStatus } });
 
   return created(res, record, "Attendance submitted for approval");
 });
@@ -132,7 +133,7 @@ const approveAttendance = asyncHandler(async (req, res) => {
     }),
   ]);
 
-  console.log(`[AUDIT] ATTENDANCE_APPROVED adminId=${adminId} adminName="${adminName}" recordId=${id} userId=${record.userId} date=${record.date.toISOString().split("T")[0]}`);
+  await writeAudit({ req, action: "ATTENDANCE_APPROVED", entityType: "StaffAttendance", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Approved", userId: record.userId, date: record.date.toISOString().split("T")[0] } });
 
   return success(res, updated, "Attendance approved — ledger entry created");
 });
@@ -161,7 +162,7 @@ const rejectAttendance = asyncHandler(async (req, res) => {
     },
   });
 
-  console.log(`[AUDIT] ATTENDANCE_REJECTED adminId=${adminId} adminName="${adminName}" recordId=${id} userId=${record.userId}`);
+  await writeAudit({ req, action: "ATTENDANCE_REJECTED", entityType: "StaffAttendance", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Rejected", userId: record.userId, rejectedReason: rejectedReason || null } });
 
   return success(res, updated, "Attendance rejected");
 });

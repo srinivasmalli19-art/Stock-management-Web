@@ -1,6 +1,7 @@
 const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
 
 const getInwards = asyncHandler(async (req, res) => {
   const { status, vendor, month } = req.query;
@@ -39,6 +40,7 @@ const createInward = asyncHandler(async (req, res) => {
     include: { sku: { select: { id: true, name: true } } },
   });
 
+  await writeAudit({ req, action: "PURCHASE_INWARD_CREATED", entityType: "PurchaseInward", entityId: entry.id, newValue: { skuId, qty, unitPrice, vendor, invoiceNo: entry.invoiceNo } });
   return created(res, entry, "Purchase entry submitted for Admin approval");
 });
 
@@ -65,6 +67,7 @@ const approveInward = asyncHandler(async (req, res) => {
     await tx.purchaseInward.update({ where: { id }, data: { status: "Approved" } });
   });
 
+  await writeAudit({ req, action: "PURCHASE_INWARD_APPROVED", entityType: "PurchaseInward", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Approved", qty: entry.qty, skuName: entry.sku.name } });
   return success(res, {}, `Approved! +${entry.qty} units of ${entry.sku.name} added to warehouse.`);
 });
 
@@ -77,6 +80,7 @@ const rejectInward = asyncHandler(async (req, res) => {
   if (entry.status !== "Pending") return error(res, "Entry already processed", 400);
 
   await prisma.purchaseInward.update({ where: { id }, data: { status: "Rejected" } });
+  await writeAudit({ req, action: "PURCHASE_INWARD_REJECTED", entityType: "PurchaseInward", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Rejected" } });
   return success(res, {}, "Purchase entry rejected");
 });
 

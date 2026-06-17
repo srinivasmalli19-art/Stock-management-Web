@@ -365,6 +365,31 @@ model AttendanceLedger {
   @@index([orgId, userId])
 }
 
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organisationId String?
+  userId         String
+  userName       String
+  role           String
+  action         String
+  entityType     String
+  entityId       String
+  oldValue       Json?
+  newValue       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organisationId])
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+  @@index([organisationId, createdAt])
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 model RefreshToken {

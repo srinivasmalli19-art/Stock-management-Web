@@ -2,6 +2,7 @@ const prisma = require("../config/db");
 const { hashPassword } = require("../utils/passwordUtils");
 const { success, created, error, paginate } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
 
 const safeUser = (u) => ({
   id: u.id, name: u.name, email: u.email, role: u.role,
@@ -56,6 +57,7 @@ const createUser = asyncHandler(async (req, res) => {
     await prisma.engineerStock.deleteMany({ where: { engineerId: user.id } });
   }
 
+  await writeAudit({ req, action: "USER_CREATED", entityType: "User", entityId: user.id, newValue: { email: user.email, role: user.role, orgId: user.orgId } });
   return created(res, safeUser(user), "User created successfully");
 });
 
@@ -68,6 +70,7 @@ const updateUser = asyncHandler(async (req, res) => {
   if (req.user.role !== "Super_Admin" && user.orgId !== req.user.orgId) return error(res, "User not found", 404);
 
   const updated = await prisma.user.update({ where: { id }, data: { name, role } });
+  await writeAudit({ req, action: "USER_UPDATED", entityType: "User", entityId: id, oldValue: { name: user.name, role: user.role }, newValue: { name, role } });
   return success(res, safeUser(updated), "User updated");
 });
 
@@ -81,6 +84,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   const passwordHash = await hashPassword(password);
   await prisma.user.update({ where: { id }, data: { passwordHash } });
+  await writeAudit({ req, action: "PASSWORD_RESET", entityType: "User", entityId: id });
   return success(res, {}, "Password updated");
 });
 
@@ -93,6 +97,7 @@ const updateStatus = asyncHandler(async (req, res) => {
   if (req.user.role !== "Super_Admin" && user.orgId !== req.user.orgId) return error(res, "User not found", 404);
 
   const updated = await prisma.user.update({ where: { id }, data: { isActive } });
+  await writeAudit({ req, action: isActive ? "USER_ENABLED" : "USER_DISABLED", entityType: "User", entityId: id, oldValue: { isActive: user.isActive }, newValue: { isActive } });
   return success(res, safeUser(updated), `User ${isActive ? "activated" : "deactivated"}`);
 });
 

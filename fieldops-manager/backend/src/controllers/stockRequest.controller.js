@@ -1,6 +1,7 @@
 const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
 
 const getRequests = asyncHandler(async (req, res) => {
   const { status, engineerId } = req.query;
@@ -38,6 +39,7 @@ const createRequest = asyncHandler(async (req, res) => {
     include: { sku: true },
   });
 
+  await writeAudit({ req, action: "STOCK_REQUEST_CREATED", entityType: "StockRequest", entityId: request.id, newValue: { skuId, qty } });
   return created(res, request, "Stock request submitted");
 });
 
@@ -81,6 +83,7 @@ const approveRequest = asyncHandler(async (req, res) => {
     await tx.stockRequest.update({ where: { id }, data: { status: "Approved" } });
   });
 
+  await writeAudit({ req, action: "STOCK_REQUEST_APPROVED", entityType: "StockRequest", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Approved", qty: request.qty, skuName: request.sku.name } });
   return success(res, {}, `Approved! ${request.qty} units allocated to engineer.`);
 });
 
@@ -94,6 +97,7 @@ const rejectRequest = asyncHandler(async (req, res) => {
   if (request.status !== "Pending") return error(res, "Only Pending requests can be rejected", 400);
 
   await prisma.stockRequest.update({ where: { id }, data: { status: "Rejected", note: note || "" } });
+  await writeAudit({ req, action: "STOCK_REQUEST_REJECTED", entityType: "StockRequest", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Rejected", note: note || null } });
   return success(res, {}, "Request rejected");
 });
 
