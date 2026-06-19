@@ -12,31 +12,49 @@ import { buildCsvBlob, triggerDownload, todayStr } from "../../utils/formatters"
 const LIMIT = 50;
 
 const ACTION_LABELS = {
+  // Organisation
+  ORGANISATION_CREATED: "Organisation Created",
+  // User
   USER_CREATED: "User Created",
   USER_UPDATED: "User Updated",
-  PASSWORD_RESET: "Password Reset",
   USER_ENABLED: "User Enabled",
   USER_DISABLED: "User Disabled",
+  USER_ORG_REASSIGNED: "User Org Reassigned",
+  PASSWORD_RESET: "Password Reset",
+  PASSWORD_CHANGED: "Password Changed",
+  // Stock
   STOCK_REQUEST_CREATED: "Stock Request Created",
   STOCK_REQUEST_APPROVED: "Stock Request Approved",
   STOCK_REQUEST_REJECTED: "Stock Request Rejected",
+  REVOKE_INITIATED: "Revoke Initiated",
+  REVOKE_APPROVED: "Revoke Approved",
+  REVOKE_REJECTED: "Revoke Rejected",
+  // Purchase
   PURCHASE_INWARD_CREATED: "Purchase Inward Created",
   PURCHASE_INWARD_APPROVED: "Purchase Inward Approved",
   PURCHASE_INWARD_REJECTED: "Purchase Inward Rejected",
+  // LP
   LP_CREATED: "LP Created",
   LP_APPROVED: "LP Approved",
   LP_REJECTED: "LP Rejected",
+  // Claims
   CLAIM_CREATED: "Claim Created",
   CLAIM_VALIDATED: "Claim Validated",
   CLAIM_APPROVED: "Claim Approved",
   CLAIM_REJECTED: "Claim Rejected",
+  // Attendance
   ATTENDANCE_SUBMITTED: "Attendance Submitted",
   ATTENDANCE_APPROVED: "Attendance Approved",
   ATTENDANCE_REJECTED: "Attendance Rejected",
+  // Productivity
+  PRODUCTIVITY_SUBMITTED: "Productivity Submitted",
+  PRODUCTIVITY_VALIDATED: "Productivity Validated",
+  PRODUCTIVITY_REJECTED: "Productivity Rejected",
 };
 
 const ENTITY_TYPES = [
-  "User", "StockRequest", "PurchaseInward", "LpRequest", "ClaimRequest", "StaffAttendance",
+  "Organisation", "User", "StockRequest", "RevokeRequest",
+  "PurchaseInward", "LpRequest", "ClaimRequest", "StaffAttendance", "Productivity",
 ];
 
 const ROLES = ["Super_Admin", "Admin", "Store_Manager", "Team_Leader", "Engineer"];

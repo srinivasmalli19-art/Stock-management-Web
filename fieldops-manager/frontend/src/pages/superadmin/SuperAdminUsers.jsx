@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { Users } from "lucide-react";
 import api from "../../services/api";
 import Card, { CardTitle } from "../../components/common/Card";
 import { PageSpinner } from "../../components/common/Spinner";
 import Badge from "../../components/common/Badge";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 
 export default function SuperAdminUsers() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [filterOrg, setFilterOrg] = useState("");
+  const [pendingAssign, setPendingAssign] = useState(null);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["sa-users"],
@@ -23,7 +26,11 @@ export default function SuperAdminUsers() {
 
   const assignMut = useMutation({
     mutationFn: ({ userId, orgId }) => api.patch(`/users/${userId}/organisation`, { orgId }),
-    onSuccess: () => qc.invalidateQueries(["sa-users"]),
+    onSuccess: () => {
+      toast.success("Organisation updated");
+      qc.invalidateQueries(["sa-users"]);
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "Failed to update organisation"),
   });
 
   if (isLoading) return <PageSpinner />;
@@ -36,7 +43,8 @@ export default function SuperAdminUsers() {
     const matchSearch = !search ||
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase());
-    const matchOrg = !filterOrg || u.orgId === filterOrg;
+    const matchOrg = !filterOrg ||
+      (filterOrg === "__unassigned__" ? u.orgId == null && u.role !== "Super_Admin" : u.orgId === filterOrg);
     return matchSearch && matchOrg;
   });
 
@@ -110,7 +118,12 @@ export default function SuperAdminUsers() {
                       <select
                         className="input text-xs py-0.5 w-40"
                         value={user.orgId || ""}
-                        onChange={(e) => assignMut.mutate({ userId: user.id, orgId: e.target.value || null })}
+                        onChange={(e) => {
+                          const newOrgId = e.target.value || null;
+                          const newOrgName = newOrgId ? (orgMap[newOrgId] || "Unknown") : "Unassigned";
+                          const fromOrgName = user.orgId ? (orgMap[user.orgId] || "Unknown") : "Unassigned";
+                          setPendingAssign({ userId: user.id, userName: user.name, orgId: newOrgId, orgName: newOrgName, fromOrgName });
+                        }}
                         disabled={assignMut.isPending}
                       >
                         <option value="">— Unassigned —</option>
@@ -129,6 +142,21 @@ export default function SuperAdminUsers() {
           </table>
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={!!pendingAssign}
+        title="Reassign Organisation?"
+        message={`Move ${pendingAssign?.userName} from "${pendingAssign?.fromOrgName}" to "${pendingAssign?.orgName}"?`}
+        detail="The user's data remains intact. They will see the new organisation on their next login."
+        confirmLabel="Confirm Reassignment"
+        variant="warn"
+        loading={assignMut.isPending}
+        onConfirm={() => {
+          assignMut.mutate({ userId: pendingAssign.userId, orgId: pendingAssign.orgId });
+          setPendingAssign(null);
+        }}
+        onCancel={() => setPendingAssign(null)}
+      />
     </div>
   );
 }
