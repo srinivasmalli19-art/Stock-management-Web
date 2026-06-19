@@ -1,7 +1,8 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 const Joi = require("joi");
-const { login, logout, refresh } = require("../controllers/auth.controller");
+const { login, logout, refresh, changePassword } = require("../controllers/auth.controller");
+const authenticate = require("../middlewares/authenticate");
 const validate = require("../middlewares/validate");
 
 const router = express.Router();
@@ -19,8 +20,14 @@ const loginSchema = Joi.object({
   password: Joi.string().required(),
 });
 
+const changePasswordSchema = Joi.object({
+  oldPassword: Joi.string().min(1).required(),
+  newPassword: Joi.string().min(8).required(),
+});
+
 router.post("/login", loginLimiter, validate(loginSchema), login);
 router.post("/logout", logout);
 router.post("/refresh", refresh);
+router.patch("/change-password", authenticate, validate(changePasswordSchema), changePassword);
 
 module.exports = router;

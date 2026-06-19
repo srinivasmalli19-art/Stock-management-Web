@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { NAV_ITEMS } from "../../constants/navItems";
 import { ROLE_LABELS } from "../../constants/roles";
 
-export default function Sidebar({ isMobileOpen, onClose }) {
+export default function Sidebar({ isMobileOpen, onClose, onChangePassword }) {
   const { currentUser, logout } = useAuth();
   const items = NAV_ITEMS[currentUser?.role] || [];
 
@@ -68,7 +68,14 @@ export default function Sidebar({ isMobileOpen, onClose }) {
         })}
       </nav>
 
-      <div className="px-4 py-3 border-t border-white/10">
+      <div className="px-4 py-3 border-t border-white/10 space-y-1">
+        <button
+          onClick={() => { onClose(); onChangePassword(); }}
+          className="flex items-center gap-2.5 text-sidebar-text hover:text-white text-[13px] transition-colors w-full cursor-pointer"
+        >
+          <i className="ti ti-key text-[17px]" />
+          Change Password
+        </button>
         <button
           onClick={logout}
           className="flex items-center gap-2.5 text-sidebar-text hover:text-white text-[13px] transition-colors w-full cursor-pointer"

@@ -1,8 +1,9 @@
 const prisma = require("../config/db");
-const { comparePassword } = require("../utils/passwordUtils");
+const { comparePassword, hashPassword } = require("../utils/passwordUtils");
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken, getRefreshTokenExpiry } = require("../utils/tokenUtils");
 const { success, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
 
 // sameSite "none" required for cross-domain cookie (frontend and backend on different domains)
 // secure must be true when sameSite is "none"
@@ -83,4 +84,28 @@ const refresh = asyncHandler(async (req, res) => {
   return success(res, { accessToken: newAccessToken }, "Token refreshed");
 });
 
-module.exports = { login, logout, refresh };
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const { id: userId } = req.user;
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !user.isActive) return error(res, "User not found", 404);
+
+  const valid = await comparePassword(oldPassword, user.passwordHash);
+  if (!valid) return error(res, "Current password is incorrect", 400);
+
+  const hashed = await hashPassword(newPassword);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash: hashed } });
+
+  await writeAudit({
+    req,
+    action: "PASSWORD_CHANGED",
+    entityType: "User",
+    entityId: userId,
+    newValue: { changedAt: new Date().toISOString() },
+  });
+
+  return success(res, {}, "Password changed successfully");
+});
+
+module.exports = { login, logout, refresh, changePassword };
