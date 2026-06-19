@@ -1,20 +1,21 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { Plus, Building2 } from "lucide-react";
 import api from "../../services/api";
 import Card, { CardTitle } from "../../components/common/Card";
+import Button from "../../components/common/Button";
 import { PageSpinner } from "../../components/common/Spinner";
 import Badge from "../../components/common/Badge";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
-import { formatDate } from "../../utils/formatters";
+import { formatDate, genPassword } from "../../utils/formatters";
 
-const EMPTY = { name: "", siteCode: "" };
+const EMPTY = { name: "", siteCode: "", adminName: "", adminEmail: "", password: "" };
 
 export default function SuperAdminOrgs() {
   const qc = useQueryClient();
   const [form, setForm] = useState(EMPTY);
   const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState(null);
   const [confirmOrg, setConfirmOrg] = useState(null);
 
   const { data, isLoading } = useQuery({
@@ -24,12 +25,18 @@ export default function SuperAdminOrgs() {
 
   const createMut = useMutation({
     mutationFn: (body) => api.post("/organisations", body),
-    onSuccess: () => { qc.invalidateQueries(["sa-organisations"]); setForm(EMPTY); setShowForm(false); },
+    onSuccess: () => {
+      toast.success("Organisation and Admin created successfully");
+      qc.invalidateQueries(["sa-organisations"]);
+      setForm(EMPTY);
+      setShowForm(false);
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "Failed to create organisation"),
   });
 
   const updateMut = useMutation({
     mutationFn: ({ id, body }) => api.patch(`/organisations/${id}`, body),
-    onSuccess: () => { qc.invalidateQueries(["sa-organisations"]); setEditId(null); },
+    onSuccess: () => qc.invalidateQueries(["sa-organisations"]),
   });
 
   if (isLoading) return <PageSpinner />;
@@ -40,7 +47,7 @@ export default function SuperAdminOrgs() {
     createMut.mutate(form);
   };
 
-  const toggleStatus = (org) => setConfirmOrg(org);
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
     <div>
@@ -52,48 +59,105 @@ export default function SuperAdminOrgs() {
           </h1>
           <p className="text-sm text-muted mt-0.5">{orgs.length} organisation{orgs.length !== 1 ? "s" : ""} registered</p>
         </div>
-        <button className="btn btn-primary flex items-center gap-1.5" onClick={() => setShowForm(!showForm)}>
+        <Button variant="primary" onClick={() => { setShowForm(!showForm); setForm(EMPTY); }}>
           <Plus size={15} /> New Org
-        </button>
+        </Button>
       </div>
 
       {showForm && (
         <div className="form-reveal mb-4">
           <Card>
             <CardTitle>Register New Organisation</CardTitle>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+            <form onSubmit={handleSubmit} className="mt-4 space-y-5">
+
               <div>
-                <label className="label">Organisation Name</label>
-                <input
-                  className="input"
-                  placeholder="e.g. Logitask Mumbai"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required
-                />
+                <p className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Organisation Details</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="label">Organisation Name *</label>
+                    <input
+                      className="input"
+                      placeholder="e.g. Logitask Mumbai"
+                      value={form.name}
+                      onChange={set("name")}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="label">Site Code *</label>
+                    <input
+                      className="input font-mono"
+                      placeholder="e.g. MUM-001"
+                      value={form.siteCode}
+                      onChange={(e) => setForm((f) => ({ ...f, siteCode: e.target.value.toUpperCase() }))}
+                      pattern="[A-Z0-9\-]+"
+                      maxLength={20}
+                      required
+                    />
+                    <p className="text-xs text-muted mt-0.5">Alphanumeric + hyphens, unique site identifier</p>
+                  </div>
+                </div>
               </div>
+
+              <hr className="border-border" />
+
               <div>
-                <label className="label">Site Code</label>
-                <input
-                  className="input font-mono"
-                  placeholder="e.g. MUM-001"
-                  value={form.siteCode}
-                  onChange={(e) => setForm({ ...form, siteCode: e.target.value.toUpperCase() })}
-                  pattern="[A-Z0-9\-]+"
-                  maxLength={20}
-                  required
-                />
-                <p className="text-xs text-muted mt-0.5">Alphanumeric, unique identifier for this site</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Organisation Admin</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="label">Admin Name *</label>
+                    <input
+                      className="input"
+                      placeholder="e.g. Rajesh Sharma"
+                      value={form.adminName}
+                      onChange={set("adminName")}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="label">Admin Email *</label>
+                    <input
+                      type="email"
+                      className="input"
+                      placeholder="e.g. admin@logitask.in"
+                      value={form.adminEmail}
+                      onChange={set("adminEmail")}
+                      required
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="label">Password *</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        className="input font-mono flex-1"
+                        placeholder="Min 8 characters"
+                        value={form.password}
+                        onChange={set("password")}
+                        minLength={8}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setForm((f) => ({ ...f, password: genPassword() }))}
+                      >
+                        <i className="ti ti-refresh" /> Generate
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted mt-0.5">Share this password with the Admin after creation.</p>
+                  </div>
+                </div>
               </div>
-              <div className="sm:col-span-2 flex gap-2">
-                <button type="submit" className="btn btn-primary" disabled={createMut.isPending}>
-                  {createMut.isPending ? "Creating…" : "Create Organisation"}
-                </button>
-                <button type="button" className="btn" onClick={() => setShowForm(false)}>Cancel</button>
+
+              <div className="flex gap-2 pt-1">
+                <Button type="submit" variant="primary" disabled={createMut.isPending}>
+                  {createMut.isPending ? "Creating…" : "Create Organisation & Admin"}
+                </Button>
+                <Button type="button" onClick={() => { setShowForm(false); setForm(EMPTY); }}>
+                  Cancel
+                </Button>
               </div>
-              {createMut.isError && (
-                <p className="sm:col-span-2 text-sm text-danger">{createMut.error?.response?.data?.message || "Failed to create"}</p>
-              )}
             </form>
           </Card>
         </div>
@@ -107,9 +171,9 @@ export default function SuperAdminOrgs() {
               <tr>
                 <th>Name</th>
                 <th>Site Code</th>
-                <th>Users</th>
+                <th>Admin</th>
                 <th>Status</th>
-                <th>Created</th>
+                <th className="hidden sm:table-cell">Created</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -118,13 +182,24 @@ export default function SuperAdminOrgs() {
                 <tr key={org.id}>
                   <td className="font-medium">{org.name}</td>
                   <td><span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">{org.siteCode}</span></td>
-                  <td>{org._count?.users ?? 0}</td>
+                  <td>
+                    {org.users?.length > 0 ? (
+                      <div>
+                        <div className="text-sm font-medium">{org.users[0].name}</div>
+                        {org.users.length > 1 && (
+                          <div className="text-xs text-muted">+{org.users.length - 1} more</div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted italic">None</span>
+                    )}
+                  </td>
                   <td><Badge status={org.isActive ? "Active" : "Inactive"} /></td>
-                  <td>{formatDate(org.createdAt)}</td>
+                  <td className="hidden sm:table-cell">{formatDate(org.createdAt)}</td>
                   <td>
                     <button
                       className={`text-xs font-medium ${org.isActive ? "text-danger" : "text-success"}`}
-                      onClick={() => toggleStatus(org)}
+                      onClick={() => setConfirmOrg(org)}
                       disabled={updateMut.isPending}
                     >
                       {org.isActive ? "Disable" : "Enable"}

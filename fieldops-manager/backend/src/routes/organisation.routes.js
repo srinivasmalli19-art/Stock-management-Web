@@ -11,7 +11,10 @@ router.use(authorize("Super_Admin"));
 
 const createSchema = Joi.object({
   name: Joi.string().min(2).required(),
-  siteCode: Joi.string().alphanum().min(2).max(20).required(),
+  siteCode: Joi.string().pattern(/^[A-Za-z0-9-]+$/).min(2).max(20).required(),
+  adminName: Joi.string().min(2).required(),
+  adminEmail: Joi.string().email().required(),
+  password: Joi.string().min(8).required(),
 });
 
 const updateSchema = Joi.object({
