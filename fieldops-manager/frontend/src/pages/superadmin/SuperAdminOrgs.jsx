@@ -5,6 +5,7 @@ import api from "../../services/api";
 import Card, { CardTitle } from "../../components/common/Card";
 import { PageSpinner } from "../../components/common/Spinner";
 import Badge from "../../components/common/Badge";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { formatDate } from "../../utils/formatters";
 
 const EMPTY = { name: "", siteCode: "" };
@@ -14,6 +15,7 @@ export default function SuperAdminOrgs() {
   const [form, setForm] = useState(EMPTY);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [confirmOrg, setConfirmOrg] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["sa-organisations"],
@@ -38,9 +40,7 @@ export default function SuperAdminOrgs() {
     createMut.mutate(form);
   };
 
-  const toggleStatus = (org) => {
-    updateMut.mutate({ id: org.id, body: { isActive: !org.isActive } });
-  };
+  const toggleStatus = (org) => setConfirmOrg(org);
 
   return (
     <div>
@@ -139,6 +139,22 @@ export default function SuperAdminOrgs() {
           </table>
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={!!confirmOrg}
+        title={confirmOrg?.isActive ? `Disable "${confirmOrg?.name}"?` : `Enable "${confirmOrg?.name}"?`}
+        message={confirmOrg?.isActive
+          ? "All users in this organisation will lose access immediately."
+          : "This organisation and its users will regain access."}
+        confirmLabel={confirmOrg?.isActive ? "Disable Organisation" : "Enable Organisation"}
+        variant={confirmOrg?.isActive ? "danger" : "success"}
+        loading={updateMut.isPending}
+        onConfirm={() => {
+          updateMut.mutate({ id: confirmOrg.id, body: { isActive: !confirmOrg.isActive } });
+          setConfirmOrg(null);
+        }}
+        onCancel={() => setConfirmOrg(null)}
+      />
     </div>
   );
 }

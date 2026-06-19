@@ -6,6 +6,7 @@ import { userService } from "../../services/userService";
 import Card, { CardTitle } from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import FormField, { inputClass, selectClass } from "../../components/common/FormField";
 import { PageSpinner } from "../../components/common/Spinner";
 import { genPassword } from "../../utils/formatters";
@@ -28,6 +29,7 @@ export default function AdminUserRegistry() {
   const [editForm, setEditForm] = useState({});
   const [newUser, setNewUser] = useState({ name: "", email: "", role: "Engineer", password: "" });
   const [engSearch, setEngSearch] = useState("");
+  const [confirmStatus, setConfirmStatus] = useState(null);
 
   const { data: usersRes, isLoading } = useQuery({
     queryKey: ["users"],
@@ -117,8 +119,7 @@ export default function AdminUserRegistry() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => statusMutation.mutate({ id: u.id, isActive: !u.isActive })}
-          disabled={statusMutation.isPending}
+          onClick={() => setConfirmStatus({ user: u, isActive: !u.isActive })}
           title={u.isActive ? "Deactivate user" : "Activate user"}
         >
           <i className={u.isActive ? "ti ti-ban text-danger" : "ti ti-circle-check text-success"} />
@@ -241,8 +242,7 @@ export default function AdminUserRegistry() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => statusMutation.mutate({ id: eng.id, isActive: !eng.isActive })}
-                        disabled={statusMutation.isPending}
+                        onClick={() => setConfirmStatus({ user: eng, isActive: !eng.isActive })}
                       >
                         {eng.isActive
                           ? <><i className="ti ti-ban text-danger" /> Disable</>
@@ -256,6 +256,23 @@ export default function AdminUserRegistry() {
           </table>
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={!!confirmStatus}
+        title={confirmStatus?.isActive ? `Enable "${confirmStatus?.user?.name}"?` : `Disable "${confirmStatus?.user?.name}"?`}
+        message={confirmStatus?.isActive
+          ? "This user will be able to log in and access the system."
+          : "This user will be immediately locked out of the system."}
+        detail={confirmStatus?.user?.email}
+        confirmLabel={confirmStatus?.isActive ? "Enable User" : "Disable User"}
+        variant={confirmStatus?.isActive ? "success" : "danger"}
+        loading={statusMutation.isPending}
+        onConfirm={() => {
+          statusMutation.mutate({ id: confirmStatus.user.id, isActive: confirmStatus.isActive });
+          setConfirmStatus(null);
+        }}
+        onCancel={() => setConfirmStatus(null)}
+      />
 
       <Modal open={!!editUser} onClose={() => setEditUser(null)} title={`Edit User — ${editUser?.name}`}>
         <FormField label="Full Name">

@@ -5,6 +5,7 @@ import api from "../../services/api";
 import Card from "../../components/common/Card";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import Tabs from "../../components/common/Tabs";
 import SkuTag from "../../components/common/SkuTag";
 import EmptyState from "../../components/common/EmptyState";
@@ -14,6 +15,7 @@ import { formatDate } from "../../utils/formatters";
 export default function AdminRevokeApprovals() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("pending");
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["revoke-requests"],
@@ -100,10 +102,10 @@ export default function AdminRevokeApprovals() {
                     Approving will deduct <strong>{rv.qty} units</strong> from {rv.engineerName}'s van stock (currently {engQty}) and return them to warehouse.
                   </div>
                   <div className="flex gap-2 justify-end">
-                    <Button variant="danger" size="sm" onClick={() => mutation.mutate({ id: rv.id, action: "Rejected" })} disabled={mutation.isPending}>
+                    <Button variant="danger" size="sm" onClick={() => setConfirmAction({ id: rv.id, action: "Rejected", engineerName: rv.engineerName, skuName: rv.skuName, qty: rv.qty })} disabled={mutation.isPending}>
                       <i className="ti ti-x" /> Reject
                     </Button>
-                    <Button variant="purple" size="sm" onClick={() => mutation.mutate({ id: rv.id, action: "Revoked" })} disabled={mutation.isPending}>
+                    <Button variant="purple" size="sm" onClick={() => setConfirmAction({ id: rv.id, action: "Revoked", engineerName: rv.engineerName, skuName: rv.skuName, qty: rv.qty })} disabled={mutation.isPending}>
                       <i className="ti ti-check" /> Approve Revoke
                     </Button>
                   </div>
@@ -113,6 +115,22 @@ export default function AdminRevokeApprovals() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmAction}
+        title={confirmAction?.action === "Revoked" ? "Approve Revoke?" : "Reject Revoke?"}
+        message={confirmAction?.action === "Revoked"
+          ? `${confirmAction?.qty} units of ${confirmAction?.skuName} will be deducted from ${confirmAction?.engineerName}'s van stock and returned to the warehouse.`
+          : `Revoke will be rejected. ${confirmAction?.engineerName} retains the ${confirmAction?.qty} units of ${confirmAction?.skuName}.`}
+        confirmLabel={confirmAction?.action === "Revoked" ? "Approve Revoke" : "Reject Revoke"}
+        variant={confirmAction?.action === "Revoked" ? "purple" : "danger"}
+        loading={mutation.isPending}
+        onConfirm={() => {
+          mutation.mutate({ id: confirmAction.id, action: confirmAction.action });
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
 
       {tab === "done" && (
         <Card>

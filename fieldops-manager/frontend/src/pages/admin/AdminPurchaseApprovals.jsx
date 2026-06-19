@@ -5,6 +5,7 @@ import api from "../../services/api";
 import Card from "../../components/common/Card";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import Tabs from "../../components/common/Tabs";
 import SkuTag from "../../components/common/SkuTag";
 import EmptyState from "../../components/common/EmptyState";
@@ -14,6 +15,7 @@ import { formatDate, formatCurrency } from "../../utils/formatters";
 export default function AdminPurchaseApprovals() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("pending");
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-purchase"],
@@ -92,10 +94,10 @@ export default function AdminPurchaseApprovals() {
                     Approving will add <strong>+{p.qty} units</strong> of <strong>{p.sku?.name}</strong> to warehouse. Current: {curQty} → {curQty + p.qty}
                   </div>
                   <div className="flex gap-2 justify-end">
-                    <Button variant="danger" size="sm" onClick={() => mutation.mutate({ id: p.id, action: "Rejected" })} disabled={mutation.isPending}>
+                    <Button variant="danger" size="sm" onClick={() => setConfirmAction({ id: p.id, action: "Rejected", skuName: p.sku?.name, qty: p.qty, vendor: p.vendor })} disabled={mutation.isPending}>
                       <i className="ti ti-x" /> Reject
                     </Button>
-                    <Button variant="success" size="sm" onClick={() => mutation.mutate({ id: p.id, action: "Approved" })} disabled={mutation.isPending}>
+                    <Button variant="success" size="sm" onClick={() => setConfirmAction({ id: p.id, action: "Approved", skuName: p.sku?.name, qty: p.qty, vendor: p.vendor })} disabled={mutation.isPending}>
                       <i className="ti ti-check" /> Approve & Add to Warehouse
                     </Button>
                   </div>
@@ -105,6 +107,22 @@ export default function AdminPurchaseApprovals() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmAction}
+        title={confirmAction?.action === "Approved" ? "Approve Purchase Entry?" : "Reject Purchase Entry?"}
+        message={confirmAction?.action === "Approved"
+          ? `+${confirmAction?.qty} units of ${confirmAction?.skuName} from ${confirmAction?.vendor} will be added to the warehouse.`
+          : `Purchase entry from ${confirmAction?.vendor} will be rejected. No stock change.`}
+        confirmLabel={confirmAction?.action === "Approved" ? "Approve & Add to Warehouse" : "Reject Entry"}
+        variant={confirmAction?.action === "Approved" ? "success" : "danger"}
+        loading={mutation.isPending}
+        onConfirm={() => {
+          mutation.mutate({ id: confirmAction.id, action: confirmAction.action });
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
 
       {tab === "done" && (
         <Card>

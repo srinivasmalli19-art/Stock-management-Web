@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import api from "../../services/api";
 import Card, { CardTitle } from "../../components/common/Card";
 import Button from "../../components/common/Button";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import Tabs from "../../components/common/Tabs";
 import { PageSpinner } from "../../components/common/Spinner";
 import { formatDate } from "../../utils/formatters";
@@ -26,6 +27,7 @@ export default function AdminAttendanceApproval() {
   const [tab, setTab] = useState("Pending");
   const [rejectId, setRejectId] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [confirmApprove, setConfirmApprove] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["staff-attendance-admin", tab],
@@ -158,7 +160,7 @@ export default function AdminAttendanceApproval() {
                               <Button
                                 size="sm"
                                 variant="success"
-                                onClick={() => approveMut.mutate(r.id)}
+                                onClick={() => setConfirmApprove(r)}
                                 disabled={approveMut.isPending}
                               >
                                 Approve
@@ -182,6 +184,19 @@ export default function AdminAttendanceApproval() {
           </div>
         </Card>
       )}
+      <ConfirmDialog
+        open={!!confirmApprove}
+        title="Approve Attendance?"
+        message={`${confirmApprove?.user?.name}'s ${confirmApprove?.attendanceStatus} on ${formatDate(confirmApprove?.date)} will be approved and added to the ledger.`}
+        confirmLabel="Approve"
+        variant="success"
+        loading={approveMut.isPending}
+        onConfirm={() => {
+          approveMut.mutate(confirmApprove.id);
+          setConfirmApprove(null);
+        }}
+        onCancel={() => setConfirmApprove(null)}
+      />
     </div>
   );
 }

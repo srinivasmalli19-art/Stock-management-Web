@@ -6,6 +6,7 @@ import { productivityService } from "../../services/productivityService";
 import Card from "../../components/common/Card";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import Tabs from "../../components/common/Tabs";
 import SkuTag from "../../components/common/SkuTag";
 import IncentivePill from "../../components/common/IncentivePill";
@@ -18,6 +19,7 @@ export default function AdminApprovals() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("pending");
   const [incentives, setIncentives] = useState({});
+  const [confirmReject, setConfirmReject] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-approvals"],
@@ -165,7 +167,7 @@ export default function AdminApprovals() {
                   </div>
 
                   <div className="flex gap-2 justify-end">
-                    <Button variant="danger" size="sm" onClick={() => mutation.mutate({ id: log.id, action: "Rejected" })} disabled={mutation.isPending}>
+                    <Button variant="danger" size="sm" onClick={() => setConfirmReject(log)} disabled={mutation.isPending}>
                       <i className="ti ti-x" /> Reject
                     </Button>
                     <Button variant="success" size="sm" onClick={() => handleApprove(log)} disabled={mutation.isPending}>
@@ -178,6 +180,20 @@ export default function AdminApprovals() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmReject}
+        title="Reject Productivity Log?"
+        message={`${confirmReject?.engineer?.name}'s log for ${formatDate(confirmReject?.date)} will be rejected and returned to them.`}
+        confirmLabel="Reject Log"
+        variant="danger"
+        loading={mutation.isPending}
+        onConfirm={() => {
+          mutation.mutate({ id: confirmReject.id, action: "Rejected" });
+          setConfirmReject(null);
+        }}
+        onCancel={() => setConfirmReject(null)}
+      />
 
       {tab === "approved" && (
         <Card>

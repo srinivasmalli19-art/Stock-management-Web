@@ -6,6 +6,7 @@ import Card from "../../components/common/Card";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import Alert from "../../components/common/Alert";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import Tabs from "../../components/common/Tabs";
 import SkuTag from "../../components/common/SkuTag";
 import EmptyState from "../../components/common/EmptyState";
@@ -15,6 +16,7 @@ import { formatDate } from "../../utils/formatters";
 export default function StoreStockRequests() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("pending");
+  const [confirmRevoke, setConfirmRevoke] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["stock-requests", "all"],
@@ -142,7 +144,7 @@ export default function StoreStockRequests() {
                       <td><Badge status={r.status} /></td>
                       <td>
                         {r.status === "Approved" && (
-                          <Button variant="warn" size="sm" onClick={() => revokeMutation.mutate(r.id)} disabled={revokeMutation.isPending}>
+                          <Button variant="warn" size="sm" onClick={() => setConfirmRevoke(r)}>
                             <i className="ti ti-arrow-back-up" /> Revoke
                           </Button>
                         )}
@@ -158,6 +160,20 @@ export default function StoreStockRequests() {
           </div>
         </Card>
       )}
+      <ConfirmDialog
+        open={!!confirmRevoke}
+        title="Initiate Stock Revoke?"
+        message={`Return ${confirmRevoke?.qty} × ${confirmRevoke?.sku?.name} from ${confirmRevoke?.engineer?.name} to the warehouse.`}
+        detail="Admin will need to approve this revoke before stock is transferred."
+        confirmLabel="Submit Revoke"
+        variant="warn"
+        loading={revokeMutation.isPending}
+        onConfirm={() => {
+          revokeMutation.mutate(confirmRevoke.id);
+          setConfirmRevoke(null);
+        }}
+        onCancel={() => setConfirmRevoke(null)}
+      />
     </div>
   );
 }
