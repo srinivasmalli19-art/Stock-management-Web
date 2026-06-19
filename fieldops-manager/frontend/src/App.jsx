@@ -29,6 +29,7 @@ import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 import SuperAdminOrgs from "./pages/superadmin/SuperAdminOrgs";
 import SuperAdminUsers from "./pages/superadmin/SuperAdminUsers";
 import SuperAdminAuditLogs from "./pages/superadmin/SuperAdminAuditLogs";
+import SuperAdminMonitoring from "./pages/superadmin/SuperAdminMonitoring";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -70,6 +71,7 @@ export default function App() {
           <Route element={<AppShell />}>
             {/* Super Admin */}
             <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
+            <Route path="/superadmin/monitoring" element={<SuperAdminMonitoring />} />
             <Route path="/superadmin/organisations" element={<SuperAdminOrgs />} />
             <Route path="/superadmin/users" element={<SuperAdminUsers />} />
             <Route path="/superadmin/audit-logs" element={<SuperAdminAuditLogs />} />
