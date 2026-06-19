@@ -1,6 +1,7 @@
 const prisma = require("../config/db");
 const { success, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
 
 const getRevokes = asyncHandler(async (req, res) => {
   const { status } = req.query;
@@ -69,6 +70,7 @@ const approveRevoke = asyncHandler(async (req, res) => {
     await tx.stockRequest.update({ where: { id: rv.stockRequestId }, data: { status: "Revoked" } });
   });
 
+  await writeAudit({ req, action: "REVOKE_APPROVED", entityType: "RevokeRequest", entityId: id, oldValue: { status: "Revoke_Pending" }, newValue: { status: "Revoked", engineerId: rv.engineerId, skuId: rv.skuId, qty: rv.qty } });
   return success(res, {}, `Revoke approved! ${rv.qty} units returned to warehouse.`);
 });
 
@@ -85,6 +87,7 @@ const rejectRevoke = asyncHandler(async (req, res) => {
     await tx.stockRequest.update({ where: { id: rv.stockRequestId }, data: { status: "Approved" } });
   });
 
+  await writeAudit({ req, action: "REVOKE_REJECTED", entityType: "RevokeRequest", entityId: id, oldValue: { status: "Revoke_Pending" }, newValue: { status: "Rejected", engineerId: rv.engineerId, skuId: rv.skuId, qty: rv.qty } });
   return success(res, {}, "Revoke rejected. Stock allocation remains.");
 });
 

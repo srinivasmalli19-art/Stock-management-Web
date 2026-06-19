@@ -75,7 +75,9 @@ const downloadInventoryCsv = asyncHandler(async (req, res) => {
     Status: item.qty <= item.sku.lowStockAlert ? "Low" : "OK",
   }));
 
-  const parser = new Parser({ fields: Object.keys(rows[0] || {}) });
+  if (rows.length === 0) return error(res, "No inventory records available for export", 400);
+
+  const parser = new Parser({ fields: Object.keys(rows[0]) });
   const csv = parser.parse(rows);
 
   res.setHeader("Content-Type", "text/csv");

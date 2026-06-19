@@ -1,6 +1,7 @@
 const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
 
 const buildWhere = (req) => {
   const { engineerId, month, status } = req.query;
@@ -70,6 +71,7 @@ const createLog = asyncHandler(async (req, res) => {
     include: { items: true },
   });
 
+  await writeAudit({ req, action: "PRODUCTIVITY_SUBMITTED", entityType: "Productivity", entityId: log.id, newValue: { engineerId, date, callsClosed: callsClosed || 0, itemCount: items.length } });
   return created(res, log, "Productivity log submitted for validation");
 });
 
@@ -87,6 +89,7 @@ const validateLog = asyncHandler(async (req, res) => {
     data: { status: "Validated", tlNote: tlNote || "" },
   });
 
+  await writeAudit({ req, action: "PRODUCTIVITY_VALIDATED", entityType: "Productivity", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Validated", tlNote: tlNote || "" } });
   return success(res, updated, "Log validated");
 });
 
@@ -104,6 +107,7 @@ const rejectTL = asyncHandler(async (req, res) => {
     data: { status: "Rejected", tlNote: tlNote || "" },
   });
 
+  await writeAudit({ req, action: "PRODUCTIVITY_REJECTED", entityType: "Productivity", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Rejected", tlNote: tlNote || "" } });
   return success(res, updated, "Log rejected");
 });
 

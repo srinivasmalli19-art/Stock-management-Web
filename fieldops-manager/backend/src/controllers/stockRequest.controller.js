@@ -110,8 +110,9 @@ const submitRevoke = asyncHandler(async (req, res) => {
   if (request.status !== "Approved") return error(res, "Only Approved requests can be revoked", 400);
   if (request.revokeRequest) return error(res, "Revoke already submitted for this request", 409);
 
+  let revokeId;
   await prisma.$transaction(async (tx) => {
-    await tx.revokeRequest.create({
+    const rv = await tx.revokeRequest.create({
       data: {
         stockRequestId: id,
         engineerId: request.engineerId,
@@ -121,9 +122,11 @@ const submitRevoke = asyncHandler(async (req, res) => {
         orgId: request.orgId,
       },
     });
+    revokeId = rv.id;
     await tx.stockRequest.update({ where: { id }, data: { status: "Revoke_Pending" } });
   });
 
+  await writeAudit({ req, action: "REVOKE_INITIATED", entityType: "RevokeRequest", entityId: revokeId, newValue: { stockRequestId: id, engineerId: request.engineerId, skuId: request.skuId, qty: request.qty } });
   return success(res, {}, "Revoke request submitted to Admin");
 });
 

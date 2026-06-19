@@ -100,7 +100,7 @@ export default function AdminDashboard() {
           <StatTile icon={Package} label="Purchase Inward" value={pendingPurchase} sub="awaiting approval" color={pendingPurchase > 0 ? "amber" : "green"} to="/admin/purchase-approvals" />
           <StatTile icon={RotateCcw} label="Revoke Requests" value={pendingRevoke} sub="awaiting review" color={pendingRevoke > 0 ? "amber" : "green"} to="/admin/revoke-approvals" />
           <StatTile icon={Receipt} label="LP Requests" value={pendingLP} sub="awaiting approval" color={pendingLP > 0 ? "purple" : "green"} to="/admin/lp-approvals" />
-          <StatTile icon={BadgeDollarSign} label="Claims" value={pendingClaims} sub="awaiting final approval" color={pendingClaims > 0 ? "red" : "green"} to="/admin/lp-approvals" />
+          <StatTile icon={BadgeDollarSign} label="Claims" value={pendingClaims} sub="awaiting final approval" color={pendingClaims > 0 ? "red" : "green"} to="/admin/lp-approvals?tab=claims" />
         </div>
       </div>
 

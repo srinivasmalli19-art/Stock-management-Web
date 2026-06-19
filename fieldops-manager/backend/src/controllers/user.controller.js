@@ -136,6 +136,7 @@ const assignOrganisation = asyncHandler(async (req, res) => {
   }
 
   const updated = await prisma.user.update({ where: { id }, data: { orgId: orgId || null } });
+  await writeAudit({ req, action: "USER_ORG_REASSIGNED", entityType: "User", entityId: id, oldValue: { orgId: user.orgId ?? null }, newValue: { orgId: orgId || null } });
   return success(res, safeUser(updated), "User organisation updated");
 });
 

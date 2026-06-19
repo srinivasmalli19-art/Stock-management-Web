@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import api from "../../services/api";
@@ -27,7 +28,8 @@ const CLAIM_LABELS = {
 
 export default function AdminLPApprovals() {
   const qc = useQueryClient();
-  const [tab, setTab] = useState("lp-pending");
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get("tab") === "claims" ? "claim-pending" : "lp-pending");
   const [selected, setSelected] = useState(null);
   const [modalType, setModalType] = useState(null); // "lp-approve" | "lp-reject" | "claim-approve" | "claim-reject"
   const [remarks, setRemarks] = useState("");

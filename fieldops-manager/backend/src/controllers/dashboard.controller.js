@@ -39,23 +39,40 @@ const teamLeaderDashboard = asyncHandler(async (req, res) => {
   const engWhere = { role: "Engineer", isActive: true };
   if (req.user.role !== "Super_Admin") engWhere.orgId = req.user.orgId;
 
+  // Query 1: all engineers
   const engineers = await prisma.user.findMany({ where: engWhere, orderBy: { name: "asc" } });
+  if (engineers.length === 0) return success(res, []);
 
-  const data = await Promise.all(
-    engineers.map(async (eng) => {
-      const logs = await prisma.productivityLog.findMany({
-        where: { engineerId: eng.id, status: "Approved", date: { gte: start, lt: end } },
-        include: { items: true },
-      });
+  const engineerIds = engineers.map((e) => e.id);
 
-      const attendance = await prisma.attendance.count({ where: { engineerId: eng.id, date: { gte: start, lt: end }, status: "Present" } });
-      const calls = logs.reduce((s, l) => s + l.callsClosed, 0);
-      const revenue = logs.reduce((s, l) => s + l.items.reduce((si, i) => si + i.saleValue, 0), 0);
-      const incentive = logs.reduce((s, l) => s + l.items.reduce((si, i) => si + (i.adminIncentive || 0), 0), 0);
+  // Query 2: all approved logs for all engineers in one batch (replaces N per-engineer queries)
+  const allLogs = await prisma.productivityLog.findMany({
+    where: { engineerId: { in: engineerIds }, status: "Approved", date: { gte: start, lt: end } },
+    include: { items: true },
+  });
 
-      return { id: eng.id, name: eng.name, email: eng.email, daysPresent: attendance, callsClosed: calls, revenue, incentive };
-    })
-  );
+  // Query 3: attendance counts grouped by engineer (replaces N per-engineer queries)
+  const attGroups = await prisma.attendance.groupBy({
+    by: ["engineerId"],
+    where: { engineerId: { in: engineerIds }, date: { gte: start, lt: end }, status: "Present" },
+    _count: { id: true },
+  });
+
+  // Build O(1) lookup maps
+  const attMap = Object.fromEntries(attGroups.map((a) => [a.engineerId, a._count.id]));
+  const logsByEngineer = {};
+  allLogs.forEach((log) => {
+    if (!logsByEngineer[log.engineerId]) logsByEngineer[log.engineerId] = [];
+    logsByEngineer[log.engineerId].push(log);
+  });
+
+  const data = engineers.map((eng) => {
+    const logs = logsByEngineer[eng.id] || [];
+    const calls = logs.reduce((s, l) => s + l.callsClosed, 0);
+    const revenue = logs.reduce((s, l) => s + l.items.reduce((si, i) => si + i.saleValue, 0), 0);
+    const incentive = logs.reduce((s, l) => s + l.items.reduce((si, i) => si + (i.adminIncentive || 0), 0), 0);
+    return { id: eng.id, name: eng.name, email: eng.email, daysPresent: attMap[eng.id] || 0, callsClosed: calls, revenue, incentive };
+  });
 
   return success(res, data);
 });

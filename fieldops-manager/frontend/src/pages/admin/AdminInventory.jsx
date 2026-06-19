@@ -46,6 +46,10 @@ export default function AdminInventory() {
   const lowCount = inventory.filter((i) => i.isLowStock).length;
 
   const handleDownload = async () => {
+    if (inventory.length === 0) {
+      toast.error("No inventory records available for export");
+      return;
+    }
     try {
       const res = await api.get("/inventory/main/csv", { responseType: "blob" });
       triggerDownload(res.data, "inventory_report.csv");
