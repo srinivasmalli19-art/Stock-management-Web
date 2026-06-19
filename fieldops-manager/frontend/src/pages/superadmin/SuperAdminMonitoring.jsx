@@ -6,12 +6,14 @@ import { PageSpinner } from "../../components/common/Spinner";
 import { formatDate } from "../../utils/formatters";
 
 const ACTION_LABELS = {
-  PRODUCTIVITY_SUBMITTED: "Productivity Submitted",
-  PRODUCTIVITY_VALIDATED: "Productivity Validated",
-  PRODUCTIVITY_REJECTED: "Productivity Rejected",
-  ATTENDANCE_SUBMITTED: "Attendance Submitted",
-  ATTENDANCE_APPROVED: "Attendance Approved",
-  ATTENDANCE_REJECTED: "Attendance Rejected",
+  ORGANISATION_CREATED: "Organisation Created",
+  USER_CREATED: "User Created",
+  USER_UPDATED: "User Updated",
+  USER_ENABLED: "User Enabled",
+  USER_DISABLED: "User Disabled",
+  USER_ORG_REASSIGNED: "Org Reassigned",
+  PASSWORD_RESET: "Password Reset",
+  PASSWORD_CHANGED: "Password Changed",
   STOCK_REQUEST_CREATED: "Stock Request Created",
   STOCK_REQUEST_APPROVED: "Stock Request Approved",
   STOCK_REQUEST_REJECTED: "Stock Request Rejected",
@@ -28,13 +30,14 @@ const ACTION_LABELS = {
   CLAIM_VALIDATED: "Claim Validated",
   CLAIM_APPROVED: "Claim Approved",
   CLAIM_REJECTED: "Claim Rejected",
-  USER_CREATED: "User Created",
-  USER_UPDATED: "User Updated",
-  USER_ENABLED: "User Enabled",
-  USER_DISABLED: "User Disabled",
-  USER_ORG_REASSIGNED: "Org Reassigned",
-  PASSWORD_RESET: "Password Reset",
-  PASSWORD_CHANGED: "Password Changed",
+  ATTENDANCE_SUBMITTED: "Attendance Submitted",
+  ATTENDANCE_APPROVED: "Attendance Approved",
+  ATTENDANCE_REJECTED: "Attendance Rejected",
+  PRODUCTIVITY_SUBMITTED: "Productivity Submitted",
+  PRODUCTIVITY_VALIDATED: "Productivity Validated",
+  PRODUCTIVITY_REJECTED: "Productivity Rejected (TL)",
+  PRODUCTIVITY_APPROVED: "Productivity Approved",
+  PRODUCTIVITY_REJECTED_BY_ADMIN: "Productivity Rejected (Admin)",
 };
 
 const ACTION_COLOR = {
@@ -63,13 +66,13 @@ const StatTile = ({ icon: Icon, label, value, sub, color = "accent" }) => {
     red: "bg-red-50 text-red-700 border-red-200",
   };
   return (
-    <div className={`rounded-xl border p-4 ${colors[color] || colors.accent}`}>
-      <div className="flex items-center gap-2 mb-2">
+    <div className={`rounded-xl border p-4 transition-all duration-200 ${colors[color] || colors.accent}`}>
+      <div className="flex items-center gap-2 mb-2.5">
         <Icon size={16} />
-        <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
       </div>
-      <div className="text-3xl font-bold">{value ?? "—"}</div>
-      {sub && <div className="text-xs opacity-60 mt-1">{sub}</div>}
+      <div className="text-3xl font-bold leading-none">{value ?? "—"}</div>
+      {sub && <div className="text-xs opacity-60 mt-1.5">{sub}</div>}
     </div>
   );
 };
@@ -101,7 +104,7 @@ export default function SuperAdminMonitoring() {
     <div>
       <div className="mb-5 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
             <Activity size={20} className="text-purple-600" />
             System Monitoring
           </h1>

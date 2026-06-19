@@ -14,12 +14,12 @@ const StatTile = ({ icon: Icon, label, value, color = "accent" }) => {
     amber: "bg-amber-50 text-amber-700 border-amber-200",
   };
   return (
-    <div className={`rounded-xl border p-4 ${colors[color]}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <Icon size={18} />
-        <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
+    <div className={`rounded-xl border p-4 transition-all duration-200 ${colors[color]}`}>
+      <div className="flex items-center gap-2 mb-2.5">
+        <Icon size={16} />
+        <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
       </div>
-      <div className="text-3xl font-bold">{value ?? "—"}</div>
+      <div className="text-3xl font-bold leading-none">{value ?? "—"}</div>
     </div>
   );
 };
@@ -47,9 +47,9 @@ export default function SuperAdminDashboard() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-xl font-bold flex items-center gap-2">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
           <Globe size={20} className="text-purple-600" />
-          Super Admin — Global Overview
+          Global Overview
         </h1>
         <p className="text-sm text-muted mt-0.5">All organisations and users across the platform</p>
       </div>

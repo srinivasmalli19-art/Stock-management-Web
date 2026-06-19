@@ -4,6 +4,7 @@ import MetricCard from "../../components/common/MetricCard";
 import Card, { CardTitle } from "../../components/common/Card";
 import Badge from "../../components/common/Badge";
 import Alert from "../../components/common/Alert";
+import EmptyState from "../../components/common/EmptyState";
 import SkuTag from "../../components/common/SkuTag";
 import { PageSpinner } from "../../components/common/Spinner";
 import { formatDate, formatCurrency } from "../../utils/formatters";
@@ -34,7 +35,10 @@ export default function StoreDashboard() {
 
   return (
     <div>
-      <div className="mb-5"><h1 className="text-xl font-bold">Store Dashboard</h1></div>
+      <div className="mb-5">
+        <h1 className="text-2xl font-bold">Store Dashboard</h1>
+        <p className="text-sm text-muted mt-0.5">Inventory, stock requests, and purchase management</p>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
         <MetricCard label="Pending Stock Requests" value={pendingStockRequests} color="accent" />
@@ -66,16 +70,28 @@ export default function StoreDashboard() {
               <tr><th>Date</th><th>SKU</th><th>Item</th><th>Qty</th><th>Vendor</th><th>Status</th></tr>
             </thead>
             <tbody>
-              {recentPurchase.map((p) => (
-                <tr key={p.id}>
-                  <td>{formatDate(p.date)}</td>
-                  <td><SkuTag id={p.skuId} /></td>
-                  <td>{p.sku?.name}</td>
-                  <td>+{p.qty}</td>
-                  <td>{p.vendor}</td>
-                  <td><Badge status={p.status} /></td>
+              {recentPurchase.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    <EmptyState
+                      icon="ti-package-import"
+                      message="No purchase entries yet"
+                      sub="Purchase inward entries created by your team will appear here."
+                    />
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                recentPurchase.map((p) => (
+                  <tr key={p.id}>
+                    <td>{formatDate(p.date)}</td>
+                    <td><SkuTag id={p.skuId} /></td>
+                    <td>{p.sku?.name}</td>
+                    <td>+{p.qty}</td>
+                    <td>{p.vendor}</td>
+                    <td><Badge status={p.status} /></td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

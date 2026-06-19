@@ -18,14 +18,14 @@ const StatTile = ({ icon: Icon, label, value, sub, color = "accent", to }) => {
     purple: "bg-purple-50 text-purple-700 border-purple-200",
   };
   const inner = (
-    <div className={`rounded-xl border p-4 ${colors[color] || colors.accent} ${to ? "hover:shadow-md transition-shadow cursor-pointer" : ""}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <Icon size={18} />
-        <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
+    <div className={`rounded-xl border p-4 transition-all duration-200 ${colors[color] || colors.accent} ${to ? "hover:shadow-lg hover:-translate-y-0.5 cursor-pointer" : ""}`}>
+      <div className="flex items-center gap-2 mb-2.5">
+        <Icon size={16} />
+        <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
       </div>
-      <div className="text-3xl font-bold">{value}</div>
-      {sub && <div className="text-xs mt-1 opacity-75">{sub}</div>}
-      {to && <div className="text-[10px] mt-2 opacity-50 font-medium">Tap to review →</div>}
+      <div className="text-3xl font-bold leading-none">{value}</div>
+      {sub && <div className="text-xs mt-1.5 opacity-70">{sub}</div>}
+      {to && <div className="text-[10px] mt-2.5 font-semibold opacity-60 flex items-center gap-0.5">Review <i className="ti ti-arrow-right text-[11px]" /></div>}
     </div>
   );
   if (to) return <Link to={to} className="block">{inner}</Link>;
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
         <p className="text-sm text-muted mt-0.5">{formatMonth(prefix)} — operations overview</p>
       </div>
 

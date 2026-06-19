@@ -58,7 +58,7 @@ export default function EngDashboard() {
     <div>
       <div className="flex items-end justify-between mb-5">
         <div>
-          <h1 className="text-xl font-bold text-text">Welcome, {firstName}</h1>
+          <h1 className="text-2xl font-bold text-text">Welcome, {firstName}</h1>
           <p className="text-sm text-muted mt-0.5">Month-to-date · {formatMonth(prefix)}</p>
         </div>
       </div>
@@ -122,7 +122,11 @@ export default function EngDashboard() {
       <Card>
         <CardTitle right={`${logs.length} entries`}>Monthly Progress — {formatMonth(prefix)}</CardTitle>
         {logs.length === 0 ? (
-          <EmptyState icon="ti-clipboard-off" message="No entries this month" />
+          <EmptyState
+          icon="ti-clipboard-off"
+          message="No entries this month"
+          sub="Submit a productivity log to track your daily calls and revenue."
+        />
         ) : (
           <div className="overflow-x-auto tbl">
             <table>
