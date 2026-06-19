@@ -151,10 +151,10 @@ export default function TLAttendance() {
               <tr>
                 <th>Date</th>
                 <th>Status</th>
-                <th>Remarks</th>
+                <th className="hidden sm:table-cell">Remarks</th>
                 <th>Approval</th>
-                <th>Approved By</th>
-                <th>Approved At</th>
+                <th className="hidden sm:table-cell">Approved By</th>
+                <th className="hidden sm:table-cell">Approved At</th>
               </tr>
             </thead>
             <tbody>
@@ -173,14 +173,14 @@ export default function TLAttendance() {
                         {r.attendanceStatus}
                       </span>
                     </td>
-                    <td className="text-sm text-muted">{r.remarks || "—"}</td>
+                    <td className="hidden sm:table-cell text-sm text-muted">{r.remarks || "—"}</td>
                     <td>
                       <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${APPROVAL_BADGE[r.submissionStatus] || ""}`}>
                         {r.submissionStatus}
                       </span>
                     </td>
-                    <td className="text-sm">{r.approvedByName || "—"}</td>
-                    <td className="text-xs text-muted">{r.approvedAt ? formatDate(r.approvedAt) : "—"}</td>
+                    <td className="hidden sm:table-cell text-sm">{r.approvedByName || "—"}</td>
+                    <td className="hidden sm:table-cell text-xs text-muted">{r.approvedAt ? formatDate(r.approvedAt) : "—"}</td>
                   </tr>
                 ))
               )}

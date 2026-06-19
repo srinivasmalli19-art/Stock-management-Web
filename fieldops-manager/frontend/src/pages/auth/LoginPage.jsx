@@ -16,20 +16,22 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [loginError, setLoginError] = useState(null);
+
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (data) => {
-    console.log("LOGIN BUTTON CLICKED", data.email);
+    setLoginError(null);
     setLoading(true);
     try {
       await login(data.email, data.password);
     } catch (err) {
-      console.error("LOGIN ERROR", err?.response?.status, err?.message, err);
       const msg = err?.response?.data?.message || "Invalid credentials";
       toast.error(msg);
+      setLoginError(msg);
     } finally {
       setLoading(false);
     }
@@ -37,7 +39,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1e293b] to-[#0f172a]">
-      <div className="bg-white rounded-xl p-10 w-[380px] shadow-2xl">
+      <div className="bg-white rounded-xl p-8 sm:p-10 w-full max-w-[380px] mx-4 shadow-2xl">
         <div className="text-center mb-7">
           <div className="w-14 h-14 bg-accent2 rounded-[14px] flex items-center justify-center mx-auto mb-3">
             <i className="ti ti-bolt text-accent text-3xl" />
@@ -52,7 +54,7 @@ export default function LoginPage() {
               Email Address
             </label>
             <input
-              {...register("email")}
+              {...register("email", { onChange: () => setLoginError(null) })}
               type="email"
               className={inputClass}
               placeholder="your.name@company.com"
@@ -67,7 +69,7 @@ export default function LoginPage() {
             </label>
             <div className="relative">
               <input
-                {...register("password")}
+                {...register("password", { onChange: () => setLoginError(null) })}
                 type={showPassword ? "text" : "password"}
                 className={`${inputClass} pr-10`}
                 placeholder="••••••••"
@@ -96,6 +98,12 @@ export default function LoginPage() {
             )}
             Sign In
           </button>
+
+          {loginError && (
+            <div className="mt-3 px-3 py-2 rounded bg-red-50 border border-red-200 text-sm text-red-700 text-center">
+              {loginError}
+            </div>
+          )}
         </form>
       </div>
     </div>

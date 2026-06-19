@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
@@ -76,10 +77,16 @@ export default function TLDashboard() {
         <MetricCard label="Team Revenue (MTD)" value={formatCurrency(totals.revenue)} color="green" />
         <MetricCard label="Total Incentive Paid" value={formatCurrency(totals.incentive)} color="amber" />
       </div>
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        <MetricCard label="Pending Validations" value={pendingValidations} sub={pendingValidations > 0 ? "entries awaiting your review" : "all caught up"} color={pendingValidations > 0 ? "red" : "green"} />
-        <MetricCard label="LP Requests" value={lpList.length} sub={`${pendingLP} awaiting Admin`} color={pendingLP > 0 ? "amber" : "accent"} />
-        <MetricCard label="Active Claims" value={activeClaims} sub="in progress" color={activeClaims > 0 ? "amber" : "green"} />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+        <Link to="/tl/approvals" className="block hover:shadow-md transition-shadow rounded-lg">
+          <MetricCard label="Pending Validations" value={pendingValidations} sub={pendingValidations > 0 ? "tap to review →" : "all caught up"} color={pendingValidations > 0 ? "red" : "green"} />
+        </Link>
+        <Link to="/tl/lp-requests" className="block hover:shadow-md transition-shadow rounded-lg">
+          <MetricCard label="LP Requests" value={lpList.length} sub={pendingLP > 0 ? "tap to review →" : `${pendingLP} awaiting Admin`} color={pendingLP > 0 ? "amber" : "accent"} />
+        </Link>
+        <Link to="/tl/lp-requests" className="block hover:shadow-md transition-shadow rounded-lg">
+          <MetricCard label="Active Claims" value={activeClaims} sub={activeClaims > 0 ? "tap to review →" : "none in progress"} color={activeClaims > 0 ? "amber" : "green"} />
+        </Link>
       </div>
 
       {chartData.length > 0 && (

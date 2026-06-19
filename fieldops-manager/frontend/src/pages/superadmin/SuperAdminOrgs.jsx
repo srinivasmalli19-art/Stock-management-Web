@@ -58,43 +58,45 @@ export default function SuperAdminOrgs() {
       </div>
 
       {showForm && (
-        <Card className="mb-4">
-          <CardTitle>Register New Organisation</CardTitle>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-            <div>
-              <label className="label">Organisation Name</label>
-              <input
-                className="input"
-                placeholder="e.g. Logitask Mumbai"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label className="label">Site Code</label>
-              <input
-                className="input font-mono"
-                placeholder="e.g. MUM-001"
-                value={form.siteCode}
-                onChange={(e) => setForm({ ...form, siteCode: e.target.value.toUpperCase() })}
-                pattern="[A-Z0-9\-]+"
-                maxLength={20}
-                required
-              />
-              <p className="text-xs text-muted mt-0.5">Alphanumeric, unique identifier for this site</p>
-            </div>
-            <div className="sm:col-span-2 flex gap-2">
-              <button type="submit" className="btn btn-primary" disabled={createMut.isPending}>
-                {createMut.isPending ? "Creating…" : "Create Organisation"}
-              </button>
-              <button type="button" className="btn" onClick={() => setShowForm(false)}>Cancel</button>
-            </div>
-            {createMut.isError && (
-              <p className="sm:col-span-2 text-sm text-danger">{createMut.error?.response?.data?.message || "Failed to create"}</p>
-            )}
-          </form>
-        </Card>
+        <div className="form-reveal mb-4">
+          <Card>
+            <CardTitle>Register New Organisation</CardTitle>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+              <div>
+                <label className="label">Organisation Name</label>
+                <input
+                  className="input"
+                  placeholder="e.g. Logitask Mumbai"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">Site Code</label>
+                <input
+                  className="input font-mono"
+                  placeholder="e.g. MUM-001"
+                  value={form.siteCode}
+                  onChange={(e) => setForm({ ...form, siteCode: e.target.value.toUpperCase() })}
+                  pattern="[A-Z0-9\-]+"
+                  maxLength={20}
+                  required
+                />
+                <p className="text-xs text-muted mt-0.5">Alphanumeric, unique identifier for this site</p>
+              </div>
+              <div className="sm:col-span-2 flex gap-2">
+                <button type="submit" className="btn btn-primary" disabled={createMut.isPending}>
+                  {createMut.isPending ? "Creating…" : "Create Organisation"}
+                </button>
+                <button type="button" className="btn" onClick={() => setShowForm(false)}>Cancel</button>
+              </div>
+              {createMut.isError && (
+                <p className="sm:col-span-2 text-sm text-danger">{createMut.error?.response?.data?.message || "Failed to create"}</p>
+              )}
+            </form>
+          </Card>
+        </div>
       )}
 
       <Card>

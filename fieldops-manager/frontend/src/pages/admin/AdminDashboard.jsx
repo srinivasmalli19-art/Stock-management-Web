@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   ClipboardCheck, Package, RotateCcw, Receipt, BadgeDollarSign,
   AlertTriangle, CalendarCheck, TrendingUp,
@@ -8,7 +9,7 @@ import Card, { CardTitle } from "../../components/common/Card";
 import { PageSpinner } from "../../components/common/Spinner";
 import { formatCurrency, formatMonth, getCurrentMonthPrefix } from "../../utils/formatters";
 
-const StatTile = ({ icon: Icon, label, value, sub, color = "accent" }) => {
+const StatTile = ({ icon: Icon, label, value, sub, color = "accent", to }) => {
   const colors = {
     accent: "bg-blue-50 text-blue-700 border-blue-200",
     amber: "bg-amber-50 text-amber-700 border-amber-200",
@@ -16,16 +17,19 @@ const StatTile = ({ icon: Icon, label, value, sub, color = "accent" }) => {
     red: "bg-red-50 text-red-700 border-red-200",
     purple: "bg-purple-50 text-purple-700 border-purple-200",
   };
-  return (
-    <div className={`rounded-xl border p-4 ${colors[color] || colors.accent}`}>
+  const inner = (
+    <div className={`rounded-xl border p-4 ${colors[color] || colors.accent} ${to ? "hover:shadow-md transition-shadow cursor-pointer" : ""}`}>
       <div className="flex items-center gap-2 mb-2">
         <Icon size={18} />
         <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
       </div>
       <div className="text-3xl font-bold">{value}</div>
       {sub && <div className="text-xs mt-1 opacity-75">{sub}</div>}
+      {to && <div className="text-[10px] mt-2 opacity-50 font-medium">Tap to review →</div>}
     </div>
   );
+  if (to) return <Link to={to} className="block">{inner}</Link>;
+  return inner;
 };
 
 export default function AdminDashboard() {
@@ -92,11 +96,11 @@ export default function AdminDashboard() {
       <div className="mb-2">
         <div className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Pending Actions</div>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
-          <StatTile icon={ClipboardCheck} label="Productivity" value={pendingProductivity} sub="awaiting approval" color={pendingProductivity > 0 ? "amber" : "green"} />
-          <StatTile icon={Package} label="Purchase Inward" value={pendingPurchase} sub="awaiting approval" color={pendingPurchase > 0 ? "amber" : "green"} />
-          <StatTile icon={RotateCcw} label="Revoke Requests" value={pendingRevoke} sub="awaiting review" color={pendingRevoke > 0 ? "amber" : "green"} />
-          <StatTile icon={Receipt} label="LP Requests" value={pendingLP} sub="awaiting approval" color={pendingLP > 0 ? "purple" : "green"} />
-          <StatTile icon={BadgeDollarSign} label="Claims" value={pendingClaims} sub="awaiting final approval" color={pendingClaims > 0 ? "red" : "green"} />
+          <StatTile icon={ClipboardCheck} label="Productivity" value={pendingProductivity} sub="awaiting approval" color={pendingProductivity > 0 ? "amber" : "green"} to="/admin/approvals" />
+          <StatTile icon={Package} label="Purchase Inward" value={pendingPurchase} sub="awaiting approval" color={pendingPurchase > 0 ? "amber" : "green"} to="/admin/purchase-approvals" />
+          <StatTile icon={RotateCcw} label="Revoke Requests" value={pendingRevoke} sub="awaiting review" color={pendingRevoke > 0 ? "amber" : "green"} to="/admin/revoke-approvals" />
+          <StatTile icon={Receipt} label="LP Requests" value={pendingLP} sub="awaiting approval" color={pendingLP > 0 ? "purple" : "green"} to="/admin/lp-approvals" />
+          <StatTile icon={BadgeDollarSign} label="Claims" value={pendingClaims} sub="awaiting final approval" color={pendingClaims > 0 ? "red" : "green"} to="/admin/lp-approvals" />
         </div>
       </div>
 
