@@ -162,6 +162,7 @@ const approveLog = asyncHandler(async (req, res) => {
   });
 
   const totalIncentive = items.reduce((s, i) => s + (i.adminIncentive || 0), 0);
+  await writeAudit({ req, action: "PRODUCTIVITY_APPROVED", entityType: "Productivity", entityId: id, oldValue: { status: "Validated" }, newValue: { status: "Approved", engineerId: log.engineerId, orgId: log.orgId, totalIncentive, adminNote: adminNote || "" } });
   return success(res, {}, `Approved! ₹${totalIncentive.toLocaleString("en-IN")} incentive saved. Attendance marked Present.`);
 });
 
@@ -179,6 +180,7 @@ const rejectAdmin = asyncHandler(async (req, res) => {
     data: { status: "Rejected", adminNote: adminNote || "" },
   });
 
+  await writeAudit({ req, action: "PRODUCTIVITY_REJECTED_BY_ADMIN", entityType: "Productivity", entityId: id, oldValue: { status: "Validated" }, newValue: { status: "Rejected", engineerId: log.engineerId, orgId: log.orgId, adminNote: adminNote || "" } });
   return success(res, updated, "Log rejected");
 });
 

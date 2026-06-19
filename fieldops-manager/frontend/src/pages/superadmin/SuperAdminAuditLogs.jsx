@@ -49,7 +49,9 @@ const ACTION_LABELS = {
   // Productivity
   PRODUCTIVITY_SUBMITTED: "Productivity Submitted",
   PRODUCTIVITY_VALIDATED: "Productivity Validated",
-  PRODUCTIVITY_REJECTED: "Productivity Rejected",
+  PRODUCTIVITY_REJECTED: "Productivity Rejected (TL)",
+  PRODUCTIVITY_APPROVED: "Productivity Approved",
+  PRODUCTIVITY_REJECTED_BY_ADMIN: "Productivity Rejected (Admin)",
 };
 
 const ENTITY_TYPES = [
