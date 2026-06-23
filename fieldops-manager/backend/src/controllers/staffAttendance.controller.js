@@ -199,10 +199,49 @@ const rejectAttendance = asyncHandler(async (req, res) => {
   return success(res, updated, "Attendance rejected");
 });
 
+// TL/SM: resubmit a rejected attendance record
+const resubmitAttendance = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { attendanceStatus, remarks } = req.body;
+
+  const record = await prisma.staffAttendance.findUnique({ where: { id } });
+  if (!record) return error(res, "Attendance record not found", 404);
+  if (record.userId !== req.user.id) return error(res, "Access denied", 403);
+  if (record.submissionStatus !== "Rejected") return error(res, "Only Rejected records can be resubmitted", 400);
+
+  const updateData = {
+    submissionStatus: "Pending",
+    approvedById: null,
+    approvedByName: null,
+    approvedAt: null,
+    rejectedReason: null,
+  };
+  if (attendanceStatus && VALID_STATUSES.includes(attendanceStatus)) updateData.attendanceStatus = attendanceStatus;
+  if (remarks !== undefined) updateData.remarks = remarks || null;
+
+  await prisma.staffAttendance.update({ where: { id }, data: updateData });
+
+  await writeAudit({ req, action: "ATTENDANCE_RESUBMITTED", entityType: "StaffAttendance", entityId: id, oldValue: { status: "Rejected" }, newValue: { status: "Pending" } });
+
+  const adminIds = await roleUserIds(record.orgId, "Admin");
+  await writeNotification({
+    userIds: adminIds,
+    orgId: record.orgId,
+    title: "Attendance Resubmitted",
+    message: `${req.user.name} resubmitted an attendance record for ${record.date.toISOString().slice(0, 10)}.`,
+    type: "action_required",
+    entityType: "StaffAttendance",
+    entityId: id,
+  });
+
+  return success(res, {}, "Attendance resubmitted for approval");
+});
+
 module.exports = {
   submitAttendance,
   getMyAttendance,
   getAllStaffAttendance,
   approveAttendance,
   rejectAttendance,
+  resubmitAttendance,
 };

@@ -1,6 +1,6 @@
 const express = require("express");
 const Joi = require("joi");
-const { getRequests, createRequest, approveRequest, rejectRequest, submitRevoke } = require("../controllers/stockRequest.controller");
+const { getRequests, createRequest, approveRequest, rejectRequest, submitRevoke, resubmitRequest } = require("../controllers/stockRequest.controller");
 const authenticate = require("../middlewares/authenticate");
 const requireOrg = require("../middlewares/requireOrg");
 const authorize = require("../middlewares/authorize");
@@ -20,5 +20,6 @@ router.post("/", authorize("Engineer"), validate(createSchema), createRequest);
 router.patch("/:id/approve", authorize("Store_Manager"), approveRequest);
 router.patch("/:id/reject", authorize("Store_Manager"), rejectRequest);
 router.post("/:id/revoke", authorize("Store_Manager"), submitRevoke);
+router.patch("/:id/resubmit", authorize("Engineer"), resubmitRequest);
 
 module.exports = router;

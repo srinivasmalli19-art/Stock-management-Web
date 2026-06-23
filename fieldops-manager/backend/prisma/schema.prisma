@@ -67,6 +67,7 @@ model Organisation {
   attendance         Attendance[]
   stockRequests      StockRequest[]
   revokeRequests     RevokeRequest[]
+  returnRequests     ReturnRequest[]
   purchaseInward     PurchaseInward[]
   lpRequests         LpRequest[]
   claimRequests      ClaimRequest[]
@@ -92,6 +93,7 @@ model User {
   engineerStock    EngineerStock[]
   productivityLogs ProductivityLog[]
   stockRequests    StockRequest[]
+  returnRequests   ReturnRequest[]
   attendance       Attendance[]
   staffAttendance  StaffAttendance[]
   refreshTokens    RefreshToken[]
@@ -117,6 +119,7 @@ model Sku {
   engineerStock     EngineerStock[]
   productivityItems ProductivityItem[]
   stockRequests     StockRequest[]
+  returnRequests    ReturnRequest[]
   purchaseInward    PurchaseInward[]
 
   @@index([orgId])
@@ -154,18 +157,19 @@ model EngineerStock {
 // ─── Productivity ─────────────────────────────────────────────────────────────
 
 model ProductivityLog {
-  id          String             @id @default(cuid())
-  engineerId  String
-  engineer    User               @relation(fields: [engineerId], references: [id])
-  date        DateTime           @db.Date
-  callsClosed Int                @default(0)
-  status      ProductivityStatus @default(Pending)
-  tlNote      String?
-  adminNote   String?
-  orgId       String
-  org         Organisation       @relation(fields: [orgId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String             @id @default(cuid())
+  engineerId   String
+  engineer     User               @relation(fields: [engineerId], references: [id])
+  date         DateTime           @db.Date
+  callsClosed  Int                @default(0)
+  rcpGenerated Int                @default(0)
+  status       ProductivityStatus @default(Pending)
+  tlNote       String?
+  adminNote    String?
+  orgId        String
+  org          Organisation       @relation(fields: [orgId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   items      ProductivityItem[]
   attendance Attendance?
@@ -242,6 +246,27 @@ model RevokeRequest {
 
   @@index([orgId])
   @@index([orgId, status])
+}
+
+// ─── Return Requests ──────────────────────────────────────────────────────────
+
+model ReturnRequest {
+  id         String       @id @default(cuid())
+  engineerId String
+  engineer   User         @relation(fields: [engineerId], references: [id])
+  skuId      String
+  sku        Sku          @relation(fields: [skuId], references: [id])
+  qty        Int
+  status     String       @default("Pending") // Pending | Approved | Rejected
+  note       String?
+  orgId      String
+  org        Organisation @relation(fields: [orgId], references: [id])
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@index([engineerId])
 }
 
 // ─── Purchase Inward ──────────────────────────────────────────────────────────

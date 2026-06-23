@@ -13,6 +13,7 @@ import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
 import QuickActions from "../../components/dashboard/QuickActions";
 import PendingActions from "../../components/dashboard/PendingActions";
 import TodaySummary from "../../components/dashboard/TodaySummary";
+import EngineerPerformanceTable from "../../components/dashboard/EngineerPerformanceTable";
 import { formatCurrency, formatMonth, getCurrentMonthPrefix } from "../../utils/formatters";
 
 const INR = (v) => `₹${Number(v || 0).toLocaleString("en-IN")}`;
@@ -132,6 +133,8 @@ export default function TLDashboard() {
         <PendingActions items={pendingItems} />
         <TodaySummary stats={todayStats} />
       </div>
+
+      <EngineerPerformanceTable />
 
       <div className="mb-5">
         <ActivityTimeline />

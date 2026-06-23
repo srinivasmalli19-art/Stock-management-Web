@@ -3,6 +3,7 @@ const { success, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { Parser } = require("json2csv");
 
+// Engineer attendance from Attendance table
 const getAttendance = asyncHandler(async (req, res) => {
   const { month, engineerId } = req.query;
   const where = {};
@@ -26,12 +27,46 @@ const getAttendance = asyncHandler(async (req, res) => {
   return success(res, records);
 });
 
+// Combined attendance for Admin: Engineers (Attendance table) + TL/SM (StaffAttendance table)
+// Returns { engineers: [...], staff: [...] } for grid consumption
+const getAttendanceAll = asyncHandler(async (req, res) => {
+  const { month } = req.query;
+  const orgId = req.user.orgId;
+
+  const monthStr = month || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+  const [year, mo] = monthStr.split("-");
+  const start = new Date(`${year}-${mo}-01`);
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + 1);
+
+  const [engineers, staff] = await Promise.all([
+    // Engineer attendance from Attendance table
+    prisma.attendance.findMany({
+      where: { orgId, date: { gte: start, lt: end } },
+      include: { engineer: { select: { id: true, name: true, role: true } } },
+      orderBy: { date: "asc" },
+    }),
+    // TL + SM from StaffAttendance (all records, not just approved)
+    prisma.staffAttendance.findMany({
+      where: {
+        orgId,
+        date: { gte: start, lt: end },
+        user: { role: { in: ["Team_Leader", "Store_Manager"] } },
+      },
+      include: { user: { select: { id: true, name: true, role: true } } },
+      orderBy: { date: "asc" },
+    }),
+  ]);
+
+  return success(res, { engineers, staff });
+});
+
+// Summary: Engineer rows from Attendance + TL/SM from StaffAttendance
+// Admin gets all roles; TL gets engineers only (preserves existing TL behavior)
 const getAttendanceSummary = asyncHandler(async (req, res) => {
   const { month } = req.query;
-  const engWhere = { role: "Engineer", isActive: true };
-  if (req.user.role !== "Super_Admin") engWhere.orgId = req.user.orgId;
-
-  const engineers = await prisma.user.findMany({ where: engWhere, orderBy: { name: "asc" } });
+  const isAdmin = req.user.role === "Admin" || req.user.role === "Super_Admin";
+  const orgId = req.user.orgId;
 
   const monthStr = month || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
   const [year, mo] = monthStr.split("-");
@@ -41,40 +76,64 @@ const getAttendanceSummary = asyncHandler(async (req, res) => {
 
   const daysInMonth = new Date(parseInt(year), parseInt(mo), 0).getDate();
   const today = new Date();
-  const workingDays = start.getMonth() === today.getMonth() && start.getFullYear() === today.getFullYear()
-    ? today.getDate()
-    : daysInMonth;
+  const workingDays =
+    start.getMonth() === today.getMonth() && start.getFullYear() === today.getFullYear()
+      ? today.getDate()
+      : daysInMonth;
 
-  const summary = await Promise.all(
+  // Always include engineers
+  const engWhere = { role: "Engineer", isActive: true };
+  if (req.user.role !== "Super_Admin") engWhere.orgId = orgId;
+
+  const engineers = await prisma.user.findMany({ where: engWhere, orderBy: { name: "asc" } });
+
+  const engRows = await Promise.all(
     engineers.map(async (eng) => {
       const attendance = await prisma.attendance.findMany({
         where: { engineerId: eng.id, date: { gte: start, lt: end } },
       });
       const daysPresent = attendance.filter((a) => a.status === "Present").length;
-
-      const logs = await prisma.productivityLog.findMany({
-        where: { engineerId: eng.id, status: "Approved", date: { gte: start, lt: end } },
-        include: { items: true },
-      });
-
-      const callsClosed = logs.reduce((s, l) => s + l.callsClosed, 0);
-      const revenue = logs.reduce((s, l) => s + l.items.reduce((si, i) => si + i.saleValue, 0), 0);
-      const incentive = logs.reduce((s, l) => s + l.items.reduce((si, i) => si + (i.adminIncentive || 0), 0), 0);
-
       return {
-        engineerId: eng.id,
+        userId: eng.id,
         name: eng.name,
-        email: eng.email,
+        role: "Engineer",
         daysPresent,
         daysAbsent: Math.max(0, workingDays - daysPresent),
-        callsClosed,
-        revenue,
-        incentive,
       };
     })
   );
 
-  return success(res, summary);
+  // If Admin, also include TL and SM from StaffAttendance
+  let staffRows = [];
+  if (isAdmin && orgId) {
+    const staffUsers = await prisma.user.findMany({
+      where: { orgId, role: { in: ["Team_Leader", "Store_Manager"] }, isActive: true },
+      orderBy: { name: "asc" },
+    });
+
+    staffRows = await Promise.all(
+      staffUsers.map(async (u) => {
+        const att = await prisma.staffAttendance.findMany({
+          where: {
+            userId: u.id,
+            date: { gte: start, lt: end },
+            submissionStatus: "Approved",
+            attendanceStatus: "Present",
+          },
+        });
+        const daysPresent = att.length;
+        return {
+          userId: u.id,
+          name: u.name,
+          role: u.role,
+          daysPresent,
+          daysAbsent: Math.max(0, workingDays - daysPresent),
+        };
+      })
+    );
+  }
+
+  return success(res, [...engRows, ...staffRows]);
 });
 
 const downloadAttendanceCsv = asyncHandler(async (req, res) => {
@@ -128,4 +187,4 @@ const downloadAttendanceCsv = asyncHandler(async (req, res) => {
   res.send(csv);
 });
 
-module.exports = { getAttendance, getAttendanceSummary, downloadAttendanceCsv };
+module.exports = { getAttendance, getAttendanceSummary, getAttendanceAll, downloadAttendanceCsv };

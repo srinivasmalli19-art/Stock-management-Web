@@ -30,10 +30,12 @@ export const NAV_ITEMS = {
     { page: "/store/dashboard", icon: "ti-layout-dashboard", label: "Store Dashboard" },
     { page: "/store/inward", icon: "ti-package-import", label: "Purchase Inward" },
     { page: "/store/requests", icon: "ti-shopping-cart", label: "Stock Requests" },
+    { page: "/store/return-requests", icon: "ti-arrow-back-up", label: "Return Requests" },
     { page: "/store/lp-requests", icon: "ti-file-invoice", label: "LP Requests" },
     { page: "/store/attendance", icon: "ti-calendar-plus", label: "My Attendance" },
-    { section: "Reports" },
+    { section: "Reports & Settings" },
     { page: "/store/inventory", icon: "ti-clipboard-list", label: "Inventory Report" },
+    { page: "/store/skus", icon: "ti-tag", label: "SKU Registry" },
   ],
   Team_Leader: [
     { section: "Team" },
@@ -45,8 +47,7 @@ export const NAV_ITEMS = {
   Engineer: [
     { section: "My Work" },
     { page: "/engineer/dashboard", icon: "ti-layout-dashboard", label: "My Dashboard" },
-    { page: "/engineer/productivity", icon: "ti-clipboard-check", label: "Log Productivity" },
-    { page: "/engineer/status", icon: "ti-calendar-stats", label: "Approval Status" },
+    { page: "/engineer/productivity", icon: "ti-clipboard-check", label: "Productivity" },
     { section: "Inventory" },
     { page: "/engineer/stock", icon: "ti-package", label: "My Van Stock" },
   ],

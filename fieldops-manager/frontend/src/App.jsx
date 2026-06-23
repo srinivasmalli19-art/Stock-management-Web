@@ -7,7 +7,6 @@ import LoginPage from "./pages/auth/LoginPage";
 // Engineer
 import EngDashboard from "./pages/engineer/EngDashboard";
 import EngProductivity from "./pages/engineer/EngProductivity";
-import EngApprovalStatus from "./pages/engineer/EngApprovalStatus";
 import EngVanStock from "./pages/engineer/EngVanStock";
 
 // Team Leader
@@ -23,6 +22,8 @@ import StoreStockRequests from "./pages/storemanager/StoreStockRequests";
 import StoreInventoryReport from "./pages/storemanager/StoreInventoryReport";
 import StoreLPRequests from "./pages/storemanager/StoreLPRequests";
 import StoreAttendance from "./pages/storemanager/StoreAttendance";
+import StoreReturnRequests from "./pages/storemanager/StoreReturnRequests";
+import StoreSkuRegistry from "./pages/storemanager/StoreSkuRegistry";
 
 // Super Admin
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
@@ -80,7 +81,7 @@ export default function App() {
             {/* Engineer */}
             <Route path="/engineer/dashboard" element={<EngDashboard />} />
             <Route path="/engineer/productivity" element={<EngProductivity />} />
-            <Route path="/engineer/status" element={<EngApprovalStatus />} />
+            <Route path="/engineer/status" element={<Navigate to="/engineer/productivity" replace />} />
             <Route path="/engineer/stock" element={<EngVanStock />} />
 
             {/* Team Leader */}
@@ -96,6 +97,8 @@ export default function App() {
             <Route path="/store/inventory" element={<StoreInventoryReport />} />
             <Route path="/store/lp-requests" element={<StoreLPRequests />} />
             <Route path="/store/attendance" element={<StoreAttendance />} />
+            <Route path="/store/return-requests" element={<StoreReturnRequests />} />
+            <Route path="/store/skus" element={<StoreSkuRegistry />} />
 
             {/* Admin */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />

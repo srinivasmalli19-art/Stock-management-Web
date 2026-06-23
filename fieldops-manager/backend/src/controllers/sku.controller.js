@@ -1,6 +1,8 @@
 const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
+const { writeAudit } = require("../utils/auditService");
+const { writeNotification, roleUserIds } = require("../utils/notificationService");
 
 const getAllSkus = asyncHandler(async (req, res) => {
   const where = {};
@@ -39,6 +41,23 @@ const createSku = asyncHandler(async (req, res) => {
     return s;
   });
 
+  const action = req.user.role === "Store_Manager" ? "SKU_CREATED_BY_STORE_MANAGER" : "SKU_CREATED";
+  await writeAudit({ req, action, entityType: "Sku", entityId: sku.id, newValue: { id: skuId, name, lowStockAlert } });
+
+  // Notify admins when SM creates a SKU
+  if (req.user.role === "Store_Manager") {
+    const adminIds = await roleUserIds(orgId, "Admin");
+    await writeNotification({
+      userIds: adminIds,
+      orgId,
+      title: "New SKU Created",
+      message: `Store Manager ${req.user.name} registered SKU ${skuId} (${name}).`,
+      type: "info",
+      entityType: "Sku",
+      entityId: sku.id,
+    });
+  }
+
   return created(res, sku, "SKU registered successfully");
 });
 
@@ -54,6 +73,8 @@ const updateSku = asyncHandler(async (req, res) => {
     where: { id },
     data: { name, ...(lowStockAlert !== undefined && { lowStockAlert }) },
   });
+
+  await writeAudit({ req, action: "SKU_UPDATED", entityType: "Sku", entityId: id, oldValue: { name: sku.name, lowStockAlert: sku.lowStockAlert }, newValue: { name, lowStockAlert } });
 
   return success(res, updated, "SKU updated");
 });

@@ -43,7 +43,7 @@ const getLogs = asyncHandler(async (req, res) => {
 });
 
 const createLog = asyncHandler(async (req, res) => {
-  const { date, callsClosed, items = [] } = req.body;
+  const { date, callsClosed, rcpGenerated = 0, items = [] } = req.body;
   const engineerId = req.user.id;
   const orgId = req.user.orgId;
 
@@ -60,6 +60,7 @@ const createLog = asyncHandler(async (req, res) => {
       orgId,
       date: logDate,
       callsClosed: callsClosed || 0,
+      rcpGenerated: parseInt(rcpGenerated) || 0,
       status: "Pending",
       items: {
         create: items.map((item) => ({
@@ -72,7 +73,7 @@ const createLog = asyncHandler(async (req, res) => {
     include: { items: true },
   });
 
-  await writeAudit({ req, action: "PRODUCTIVITY_SUBMITTED", entityType: "Productivity", entityId: log.id, newValue: { engineerId, date, callsClosed: callsClosed || 0, itemCount: items.length } });
+  await writeAudit({ req, action: "PRODUCTIVITY_SUBMITTED", entityType: "Productivity", entityId: log.id, newValue: { engineerId, date, callsClosed: callsClosed || 0, rcpGenerated: parseInt(rcpGenerated) || 0, itemCount: items.length } });
 
   const tlIds = await roleUserIds(orgId, "Team_Leader");
   await writeNotification({
@@ -86,6 +87,55 @@ const createLog = asyncHandler(async (req, res) => {
   });
 
   return created(res, log, "Productivity log submitted for validation");
+});
+
+const resubmitLog = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { date, callsClosed, rcpGenerated = 0, items = [] } = req.body;
+
+  const log = await prisma.productivityLog.findUnique({
+    where: { id },
+    include: { items: true },
+  });
+  if (!log) return error(res, "Log not found", 404);
+  if (log.engineerId !== req.user.id) return error(res, "Access denied", 403);
+  if (log.status !== "Rejected") return error(res, "Only Rejected logs can be resubmitted", 400);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.productivityItem.deleteMany({ where: { productivityLogId: id } });
+    await tx.productivityLog.update({
+      where: { id },
+      data: {
+        callsClosed: callsClosed !== undefined ? parseInt(callsClosed) || 0 : log.callsClosed,
+        rcpGenerated: rcpGenerated !== undefined ? parseInt(rcpGenerated) || 0 : log.rcpGenerated,
+        status: "Pending",
+        tlNote: null,
+        adminNote: null,
+        items: {
+          create: items.map((item) => ({
+            skuId: item.skuId,
+            qty: item.qty,
+            saleValue: item.saleValue || 0,
+          })),
+        },
+      },
+    });
+  });
+
+  await writeAudit({ req, action: "PRODUCTIVITY_RESUBMITTED", entityType: "Productivity", entityId: id, oldValue: { status: "Rejected" }, newValue: { status: "Pending" } });
+
+  const tlIds = await roleUserIds(log.orgId, "Team_Leader");
+  await writeNotification({
+    userIds: tlIds,
+    orgId: log.orgId,
+    title: "Productivity Log Resubmitted",
+    message: `${req.user.name} resubmitted a productivity log for ${new Date(log.date).toISOString().slice(0, 10)}.`,
+    type: "action_required",
+    entityType: "Productivity",
+    entityId: id,
+  });
+
+  return success(res, {}, "Log resubmitted for validation");
 });
 
 const validateLog = asyncHandler(async (req, res) => {
@@ -241,4 +291,4 @@ const rejectAdmin = asyncHandler(async (req, res) => {
   return success(res, updated, "Log rejected");
 });
 
-module.exports = { getLogs, createLog, validateLog, rejectTL, approveLog, rejectAdmin };
+module.exports = { getLogs, createLog, resubmitLog, validateLog, rejectTL, approveLog, rejectAdmin };

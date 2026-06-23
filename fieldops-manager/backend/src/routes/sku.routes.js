@@ -22,7 +22,8 @@ const updateSchema = Joi.object({
 });
 
 router.get("/", getAllSkus);
-router.post("/", authorize("Admin"), validate(createSchema), createSku);
+// Store_Manager can create; Admin can create/edit/delete
+router.post("/", authorize("Admin", "Store_Manager"), validate(createSchema), createSku);
 router.put("/:id", authorize("Admin"), validate(updateSchema), updateSku);
 
 module.exports = router;

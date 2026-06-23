@@ -6,6 +6,7 @@ const {
   getAllStaffAttendance,
   approveAttendance,
   rejectAttendance,
+  resubmitAttendance,
 } = require("../controllers/staffAttendance.controller");
 const authenticate = require("../middlewares/authenticate");
 const requireOrg = require("../middlewares/requireOrg");
@@ -38,5 +39,8 @@ router.get("/me", authorize("Team_Leader", "Store_Manager"), getMyAttendance);
 router.get("/", authorize("Admin", "Super_Admin"), getAllStaffAttendance);
 router.patch("/:id/approve", authorize("Admin", "Super_Admin"), approveAttendance);
 router.patch("/:id/reject", authorize("Admin", "Super_Admin"), validate(rejectSchema), rejectAttendance);
+
+// TL / SM: resubmit rejected record
+router.patch("/:id/resubmit", authorize("Team_Leader", "Store_Manager"), resubmitAttendance);
 
 module.exports = router;

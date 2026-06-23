@@ -1,6 +1,6 @@
 const express = require("express");
 const Joi = require("joi");
-const { getLogs, createLog, validateLog, rejectTL, approveLog, rejectAdmin } = require("../controllers/productivity.controller");
+const { getLogs, createLog, resubmitLog, validateLog, rejectTL, approveLog, rejectAdmin } = require("../controllers/productivity.controller");
 const authenticate = require("../middlewares/authenticate");
 const requireOrg = require("../middlewares/requireOrg");
 const authorize = require("../middlewares/authorize");
@@ -13,6 +13,19 @@ router.use(requireOrg);
 const createSchema = Joi.object({
   date: Joi.string().isoDate().required(),
   callsClosed: Joi.number().integer().min(0).max(30).optional(),
+  rcpGenerated: Joi.number().integer().min(0).optional(),
+  items: Joi.array().items(
+    Joi.object({
+      skuId: Joi.string().required(),
+      qty: Joi.number().integer().min(1).required(),
+      saleValue: Joi.number().min(0).optional(),
+    })
+  ).optional(),
+});
+
+const resubmitSchema = Joi.object({
+  callsClosed: Joi.number().integer().min(0).max(30).optional(),
+  rcpGenerated: Joi.number().integer().min(0).optional(),
   items: Joi.array().items(
     Joi.object({
       skuId: Joi.string().required(),
@@ -24,6 +37,7 @@ const createSchema = Joi.object({
 
 router.get("/", getLogs);
 router.post("/", authorize("Engineer"), validate(createSchema), createLog);
+router.patch("/:id/resubmit", authorize("Engineer"), validate(resubmitSchema), resubmitLog);
 router.patch("/:id/validate", authorize("Team_Leader"), validateLog);
 router.patch("/:id/reject-tl", authorize("Team_Leader"), rejectTL);
 router.patch("/:id/approve", authorize("Admin"), approveLog);

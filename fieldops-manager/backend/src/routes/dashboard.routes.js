@@ -1,5 +1,5 @@
 const express = require("express");
-const { engineerDashboard, teamLeaderDashboard, storeDashboard, adminDashboard, getActivity, getWidgets } = require("../controllers/dashboard.controller");
+const { engineerDashboard, teamLeaderDashboard, storeDashboard, adminDashboard, getActivity, getWidgets, getEngineerPerformance } = require("../controllers/dashboard.controller");
 const authenticate = require("../middlewares/authenticate");
 const requireOrg = require("../middlewares/requireOrg");
 const authorize = require("../middlewares/authorize");
@@ -17,5 +17,6 @@ router.get("/admin", authorize("Admin"), adminDashboard);
 const ALL_ROLES = ["Engineer", "Team_Leader", "Store_Manager", "Admin", "Super_Admin"];
 router.get("/activity", authorize(...ALL_ROLES), getActivity);
 router.get("/widgets", authorize(...ALL_ROLES), getWidgets);
+router.get("/engineer-performance", authorize("Admin", "Team_Leader"), getEngineerPerformance);
 
 module.exports = router;

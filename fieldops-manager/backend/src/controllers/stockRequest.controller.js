@@ -177,4 +177,41 @@ const submitRevoke = asyncHandler(async (req, res) => {
   return success(res, {}, "Revoke request submitted to Admin");
 });
 
-module.exports = { getRequests, createRequest, approveRequest, rejectRequest, submitRevoke };
+const resubmitRequest = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { skuId, qty } = req.body;
+
+  const request = await prisma.stockRequest.findUnique({ where: { id }, include: { sku: true } });
+  if (!request) return error(res, "Request not found", 404);
+  if (request.engineerId !== req.user.id) return error(res, "Access denied", 403);
+  if (request.status !== "Rejected") return error(res, "Only Rejected requests can be resubmitted", 400);
+
+  const updatedData = {};
+  if (skuId) {
+    const sku = await prisma.sku.findUnique({ where: { id: skuId } });
+    if (!sku || sku.orgId !== req.user.orgId) return error(res, "SKU not found", 404);
+    updatedData.skuId = skuId;
+  }
+  if (qty) updatedData.qty = parseInt(qty);
+  updatedData.status = "Pending";
+  updatedData.note = null;
+
+  await prisma.stockRequest.update({ where: { id }, data: updatedData });
+
+  await writeAudit({ req, action: "STOCK_REQUEST_RESUBMITTED", entityType: "StockRequest", entityId: id, oldValue: { status: "Rejected" }, newValue: { status: "Pending" } });
+
+  const smIds = await roleUserIds(request.orgId, "Store_Manager");
+  await writeNotification({
+    userIds: smIds,
+    orgId: request.orgId,
+    title: "Stock Request Resubmitted",
+    message: `${req.user.name} resubmitted a stock request.`,
+    type: "action_required",
+    entityType: "StockRequest",
+    entityId: id,
+  });
+
+  return success(res, {}, "Request resubmitted");
+});
+
+module.exports = { getRequests, createRequest, approveRequest, rejectRequest, submitRevoke, resubmitRequest };

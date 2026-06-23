@@ -85,24 +85,26 @@ const getWidgets = asyncHandler(async (req, res) => {
   }
 
   if (role === "Store_Manager") {
-    const [pendingStock, pendingPurchase, pendingClaims, stockToday, purchaseToday] = await Promise.all([
+    const [pendingStock, pendingReturn, pendingPurchase, pendingClaims, stockToday, purchaseToday] = await Promise.all([
       prisma.stockRequest.count({ where: { orgId, status: "Pending" } }),
+      prisma.returnRequest.count({ where: { orgId, status: "Pending" } }),
       prisma.purchaseInward.count({ where: { orgId, status: "Pending" } }),
       prisma.claimRequest.count({ where: { orgId, status: "CLAIM_VALIDATION_PENDING" } }),
       prisma.stockRequest.count({ where: { orgId, createdAt: { gte: todayStart, lt: todayEnd } } }),
       prisma.purchaseInward.count({ where: { orgId, createdAt: { gte: todayStart, lt: todayEnd } } }),
     ]);
     return success(res, {
-      pending: { stockRequests: pendingStock, purchaseInward: pendingPurchase, claimValidations: pendingClaims },
+      pending: { stockRequests: pendingStock, returnRequests: pendingReturn, purchaseInward: pendingPurchase, claimValidations: pendingClaims },
       today: { stockRequestsToday: stockToday, purchaseInwardToday: purchaseToday },
     });
   }
 
   if (role === "Admin") {
-    const [pendingProductivity, pendingPurchase, pendingRevoke, pendingLP, pendingClaims, pendingAttendance, approvalsToday, usersToday] = await Promise.all([
+    const [pendingProductivity, pendingPurchase, pendingRevoke, pendingReturn, pendingLP, pendingClaims, pendingAttendance, approvalsToday, usersToday] = await Promise.all([
       prisma.productivityLog.count({ where: { orgId, status: "Validated" } }),
       prisma.purchaseInward.count({ where: { orgId, status: "Pending" } }),
       prisma.revokeRequest.count({ where: { orgId, status: "Revoke_Pending" } }),
+      prisma.returnRequest.count({ where: { orgId, status: "Pending" } }),
       prisma.lpRequest.count({ where: { orgId, status: "LP_PENDING_ADMIN_APPROVAL" } }),
       prisma.claimRequest.count({ where: { orgId, status: "CLAIM_ADMIN_APPROVAL_PENDING" } }),
       prisma.staffAttendance.count({ where: { orgId, submissionStatus: "Pending" } }),
@@ -110,7 +112,7 @@ const getWidgets = asyncHandler(async (req, res) => {
       prisma.auditLog.count({ where: { organisationId: orgId, action: "USER_CREATED", createdAt: { gte: todayStart, lt: todayEnd } } }),
     ]);
     return success(res, {
-      pending: { productivity: pendingProductivity, purchase: pendingPurchase, revoke: pendingRevoke, lp: pendingLP, claims: pendingClaims, attendance: pendingAttendance },
+      pending: { productivity: pendingProductivity, purchase: pendingPurchase, revoke: pendingRevoke, returnRequests: pendingReturn, lp: pendingLP, claims: pendingClaims, attendance: pendingAttendance },
       today: { approvalsToday, usersToday },
     });
   }
@@ -230,4 +232,55 @@ const adminDashboard = asyncHandler(async (req, res) => {
   return success(res, { pendingProductivity, pendingPurchase, pendingRevoke });
 });
 
-module.exports = { engineerDashboard, teamLeaderDashboard, storeDashboard, adminDashboard, getActivity, getWidgets };
+// GET /dashboard/engineer-performance?month=YYYY-MM — Admin + TL
+const getEngineerPerformance = asyncHandler(async (req, res) => {
+  const { month } = req.query;
+  const orgId = req.user.orgId;
+
+  const monthStr = month || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+  const [year, mo] = monthStr.split("-");
+  const start = new Date(`${year}-${mo}-01`);
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + 1);
+
+  const engWhere = { role: "Engineer", isActive: true };
+  if (req.user.role !== "Super_Admin") engWhere.orgId = orgId;
+
+  const engineers = await prisma.user.findMany({ where: engWhere, orderBy: { name: "asc" } });
+  if (engineers.length === 0) return success(res, []);
+
+  const engineerIds = engineers.map((e) => e.id);
+
+  const [allLogs, attGroups] = await Promise.all([
+    prisma.productivityLog.findMany({
+      where: { engineerId: { in: engineerIds }, status: "Approved", date: { gte: start, lt: end } },
+      include: { items: true },
+    }),
+    prisma.attendance.groupBy({
+      by: ["engineerId"],
+      where: { engineerId: { in: engineerIds }, date: { gte: start, lt: end }, status: "Present" },
+      _count: { id: true },
+    }),
+  ]);
+
+  const attMap = Object.fromEntries(attGroups.map((a) => [a.engineerId, a._count.id]));
+  const logsByEngineer = {};
+  allLogs.forEach((log) => {
+    if (!logsByEngineer[log.engineerId]) logsByEngineer[log.engineerId] = [];
+    logsByEngineer[log.engineerId].push(log);
+  });
+
+  const data = engineers.map((eng) => {
+    const logs = logsByEngineer[eng.id] || [];
+    const callsClosed = logs.reduce((s, l) => s + l.callsClosed, 0);
+    const revenue = logs.reduce((s, l) => s + l.items.reduce((si, i) => si + i.saleValue, 0), 0);
+    const rcpGenerated = logs.reduce((s, l) => s + (l.rcpGenerated || 0), 0);
+    const daysPresent = attMap[eng.id] || 0;
+    const perCallRevenue = callsClosed > 0 ? Math.round((revenue / callsClosed) * 100) / 100 : 0;
+    return { id: eng.id, name: eng.name, daysPresent, callsClosed, revenue, perCallRevenue, rcpGenerated };
+  });
+
+  return success(res, data);
+});
+
+module.exports = { engineerDashboard, teamLeaderDashboard, storeDashboard, adminDashboard, getActivity, getWidgets, getEngineerPerformance };
