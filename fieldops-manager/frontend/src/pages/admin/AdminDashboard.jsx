@@ -7,7 +7,18 @@ import {
 import api from "../../services/api";
 import Card, { CardTitle } from "../../components/common/Card";
 import { PageSpinner } from "../../components/common/Spinner";
+import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
+import QuickActions from "../../components/dashboard/QuickActions";
+import PendingActions from "../../components/dashboard/PendingActions";
+import TodaySummary from "../../components/dashboard/TodaySummary";
 import { formatCurrency, formatMonth, getCurrentMonthPrefix } from "../../utils/formatters";
+
+const QUICK_ACTIONS = [
+  { label: "User Management",      icon: "ti-users",            to: "/admin/users"                },
+  { label: "LP Approvals",         icon: "ti-receipt",          to: "/admin/lp-approvals"         },
+  { label: "Attendance Approvals", icon: "ti-calendar-check",   to: "/admin/attendance-approval"  },
+  { label: "Audit Logs",           icon: "ti-clipboard-list",   to: "/admin/audit-logs"           },
+];
 
 const StatTile = ({ icon: Icon, label, value, sub, color = "accent", to }) => {
   const colors = {
@@ -66,6 +77,12 @@ export default function AdminDashboard() {
     staleTime: 60000,
   });
 
+  const { data: widgets } = useQuery({
+    queryKey: ["dashboard-widgets", "admin"],
+    queryFn: () => api.get("/dashboard/widgets").then((r) => r.data.data),
+    staleTime: 30000,
+  });
+
   if (dashLoading) return <PageSpinner />;
 
   const { pendingProductivity = 0, pendingPurchase = 0, pendingRevoke = 0 } = dashData || {};
@@ -85,6 +102,25 @@ export default function AdminDashboard() {
   const totalDays = totalPresent + totalAbsent;
   const overallPct = totalDays > 0 ? Math.round((totalPresent / totalDays) * 100) : 0;
 
+  const w = widgets || {};
+  const pending = w.pending || {};
+  const today = w.today || {};
+
+  const pendingItems = [
+    { label: "Productivity Approvals",  count: pending.productivity || 0, to: "/admin/approvals",            color: "amber"  },
+    { label: "Purchase Inward",         count: pending.purchase     || 0, to: "/admin/purchase-approvals",   color: "accent" },
+    { label: "Revoke Requests",         count: pending.revoke       || 0, to: "/admin/revoke-approvals",     color: "amber"  },
+    { label: "LP Requests",             count: pending.lp           || 0, to: "/admin/lp-approvals",         color: "purple" },
+    { label: "Claims",                  count: pending.claims       || 0, to: "/admin/lp-approvals",         color: "red"    },
+    { label: "Staff Attendance",        count: pending.attendance   || 0, to: "/admin/attendance-approval",  color: "accent" },
+  ];
+
+  const todayStats = [
+    { label: "Approvals Today", value: today.approvalsToday || 0, icon: "ti-circle-check",  color: "green"  },
+    { label: "Users Created",   value: today.usersToday     || 0, icon: "ti-user-plus",     color: "accent" },
+    { label: "Low Stock SKUs",  value: lowStockItems.length,      icon: "ti-alert-triangle", color: "amber"  },
+  ];
+
   return (
     <div>
       <div className="mb-5">
@@ -92,7 +128,7 @@ export default function AdminDashboard() {
         <p className="text-sm text-muted mt-0.5">{formatMonth(prefix)} — operations overview</p>
       </div>
 
-      {/* Pending actions */}
+      {/* Existing pending action tiles */}
       <div className="mb-2">
         <div className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Pending Actions</div>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
@@ -102,6 +138,20 @@ export default function AdminDashboard() {
           <StatTile icon={Receipt} label="LP Requests" value={pendingLP} sub="awaiting approval" color={pendingLP > 0 ? "purple" : "green"} to="/admin/lp-approvals" />
           <StatTile icon={BadgeDollarSign} label="Claims" value={pendingClaims} sub="awaiting final approval" color={pendingClaims > 0 ? "red" : "green"} to="/admin/lp-approvals?tab=claims" />
         </div>
+      </div>
+
+      {/* Phase E widgets */}
+      <div className="mb-4">
+        <QuickActions actions={QUICK_ACTIONS} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <PendingActions items={pendingItems} />
+        <TodaySummary stats={todayStats} />
+      </div>
+
+      <div className="mb-5">
+        <ActivityTimeline />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">

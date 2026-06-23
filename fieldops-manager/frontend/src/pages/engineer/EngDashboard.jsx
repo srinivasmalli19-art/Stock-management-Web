@@ -10,10 +10,21 @@ import Card, { CardTitle } from "../../components/common/Card";
 import Badge from "../../components/common/Badge";
 import { PageSpinner } from "../../components/common/Spinner";
 import EmptyState from "../../components/common/EmptyState";
+import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
+import QuickActions from "../../components/dashboard/QuickActions";
+import PendingActions from "../../components/dashboard/PendingActions";
+import TodaySummary from "../../components/dashboard/TodaySummary";
 import { formatDate, formatCurrency, getCurrentMonthPrefix, formatMonth } from "../../utils/formatters";
 
 const INR = (v) => `₹${Number(v || 0).toLocaleString("en-IN")}`;
 const SHORT = (v) => `₹${(v / 1000).toFixed(0)}k`;
+
+const QUICK_ACTIONS = [
+  { label: "Log Productivity", icon: "ti-clipboard-plus", to: "/engineer/productivity" },
+  { label: "Request Stock",    icon: "ti-package-export", to: "/engineer/stock"        },
+  { label: "Van Stock",        icon: "ti-truck",          to: "/engineer/stock"        },
+  { label: "Approval Status",  icon: "ti-check-list",     to: "/engineer/status"       },
+];
 
 export default function EngDashboard() {
   const { currentUser } = useAuth();
@@ -36,6 +47,12 @@ export default function EngDashboard() {
     staleTime: 60000,
   });
 
+  const { data: widgets } = useQuery({
+    queryKey: ["dashboard-widgets", "engineer"],
+    queryFn: () => api.get("/dashboard/widgets").then((r) => r.data.data),
+    staleTime: 30000,
+  });
+
   if (isLoading) return <PageSpinner />;
 
   const { callsClosed = 0, revenue = 0, incentive = 0, daysPresent = 0, logs = [] } = data || {};
@@ -45,11 +62,26 @@ export default function EngDashboard() {
   const stockItems = stock.length;
   const firstName = currentUser?.name?.split(" ")[0] || "there";
 
+  const w = widgets || {};
+  const pending = w.pending || {};
+  const today = w.today || {};
+
+  const pendingItems = [
+    { label: "Stock Requests Pending",        count: pending.stockRequests  || 0, to: "/engineer/stock",   color: "amber" },
+    { label: "Productivity Awaiting Approval", count: pending.pendingApprovals || 0, to: "/engineer/status", color: "accent" },
+  ];
+
+  const todayStats = [
+    { label: "Calls Closed Today", value: today.callsClosed || 0,          icon: "ti-phone-call",  color: "accent" },
+    { label: "Revenue Today",       value: formatCurrency(today.revenue || 0), icon: "ti-currency-rupee", color: "green" },
+    { label: "Pending Approvals",   value: pending.pendingApprovals || 0,   icon: "ti-clock",       color: "amber"  },
+  ];
+
   // Build per-day chart data from logs
   const chartData = [...logs]
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .map((log) => ({
-      day: log.date?.slice(8, 10), // DD
+      day: log.date?.slice(8, 10),
       Calls: log.callsClosed,
       Revenue: Math.round((log.items || []).reduce((s, i) => s + i.saleValue, 0)),
     }));
@@ -72,6 +104,20 @@ export default function EngDashboard() {
       <div className="grid grid-cols-2 gap-3 mb-5">
         <MetricCard label="Van Stock Items" value={stockItems} sub="SKUs currently allocated" color="accent" />
         <MetricCard label="Pending Stock Requests" value={pendingReqs} sub={pendingReqs > 0 ? "awaiting store approval" : "all fulfilled"} color={pendingReqs > 0 ? "amber" : "green"} />
+      </div>
+
+      {/* Phase E widgets */}
+      <div className="mb-4">
+        <QuickActions actions={QUICK_ACTIONS} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <PendingActions items={pendingItems} />
+        <TodaySummary stats={todayStats} />
+      </div>
+
+      <div className="mb-5">
+        <ActivityTimeline />
       </div>
 
       {chartData.length > 1 && (

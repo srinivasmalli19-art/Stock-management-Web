@@ -7,7 +7,18 @@ import Alert from "../../components/common/Alert";
 import EmptyState from "../../components/common/EmptyState";
 import SkuTag from "../../components/common/SkuTag";
 import { PageSpinner } from "../../components/common/Spinner";
+import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
+import QuickActions from "../../components/dashboard/QuickActions";
+import PendingActions from "../../components/dashboard/PendingActions";
+import TodaySummary from "../../components/dashboard/TodaySummary";
 import { formatDate, formatCurrency } from "../../utils/formatters";
+
+const QUICK_ACTIONS = [
+  { label: "Purchase Inward", icon: "ti-truck-delivery", to: "/store/inward"     },
+  { label: "Stock Requests",  icon: "ti-package",        to: "/store/requests"   },
+  { label: "Inventory",       icon: "ti-warehouse",      to: "/store/inventory"  },
+  { label: "LP Claims",       icon: "ti-receipt",        to: "/store/lp-requests"},
+];
 
 export default function StoreDashboard() {
   const { data, isLoading } = useQuery({
@@ -18,6 +29,12 @@ export default function StoreDashboard() {
   const { data: claimData } = useQuery({
     queryKey: ["store-claim-requests"],
     queryFn: () => api.get("/claim-requests").then((r) => r.data.data),
+    staleTime: 30000,
+  });
+
+  const { data: widgets } = useQuery({
+    queryKey: ["dashboard-widgets", "sm"],
+    queryFn: () => api.get("/dashboard/widgets").then((r) => r.data.data),
     staleTime: 30000,
   });
 
@@ -32,6 +49,22 @@ export default function StoreDashboard() {
   } = data || {};
   const claimList = claimData || [];
   const pendingClaims = claimList.filter((c) => c.status === "CLAIM_VALIDATION_PENDING").length;
+
+  const w = widgets || {};
+  const pending = w.pending || {};
+  const today = w.today || {};
+
+  const pendingItems = [
+    { label: "Stock Requests Pending",      count: pending.stockRequests   || 0, to: "/store/requests",    color: "accent" },
+    { label: "Purchase Inward (Admin Review)", count: pending.purchaseInward || 0, to: "/store/inward",      color: "amber"  },
+    { label: "Claims Awaiting Validation",  count: pending.claimValidations || 0, to: "/store/lp-requests", color: "purple" },
+  ];
+
+  const todayStats = [
+    { label: "Stock Requests Today",   value: today.stockRequestsToday   || 0, icon: "ti-package",          color: "accent" },
+    { label: "Purchase Entries Today", value: today.purchaseInwardToday  || 0, icon: "ti-truck-delivery",   color: "green"  },
+    { label: "Low Stock SKUs",         value: lowStockSkus.length,             icon: "ti-alert-triangle",   color: "amber"  },
+  ];
 
   return (
     <div>
@@ -61,6 +94,20 @@ export default function StoreDashboard() {
           <strong>Low stock:</strong> {lowStockSkus.map((s) => s.name).join(", ")}
         </Alert>
       )}
+
+      {/* Phase E widgets */}
+      <div className="mb-4">
+        <QuickActions actions={QUICK_ACTIONS} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <PendingActions items={pendingItems} />
+        <TodaySummary stats={todayStats} />
+      </div>
+
+      <div className="mb-5">
+        <ActivityTimeline />
+      </div>
 
       <Card>
         <CardTitle>Recent Purchase Inward</CardTitle>

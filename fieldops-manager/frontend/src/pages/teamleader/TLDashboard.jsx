@@ -9,10 +9,21 @@ import Card, { CardTitle } from "../../components/common/Card";
 import MetricCard from "../../components/common/MetricCard";
 import IncentivePill from "../../components/common/IncentivePill";
 import { PageSpinner } from "../../components/common/Spinner";
+import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
+import QuickActions from "../../components/dashboard/QuickActions";
+import PendingActions from "../../components/dashboard/PendingActions";
+import TodaySummary from "../../components/dashboard/TodaySummary";
 import { formatCurrency, formatMonth, getCurrentMonthPrefix } from "../../utils/formatters";
 
 const INR = (v) => `₹${Number(v || 0).toLocaleString("en-IN")}`;
 const SHORT = (v) => `₹${(v / 1000).toFixed(0)}k`;
+
+const QUICK_ACTIONS = [
+  { label: "Validation Queue",  icon: "ti-check-list",     to: "/tl/approvals"    },
+  { label: "My Attendance",     icon: "ti-calendar-check", to: "/tl/attendance"   },
+  { label: "LP Requests",       icon: "ti-receipt",        to: "/tl/lp-requests"  },
+  { label: "Team Dashboard",    icon: "ti-layout-dashboard",to: "/tl/dashboard"   },
+];
 
 export default function TLDashboard() {
   const prefix = getCurrentMonthPrefix();
@@ -40,6 +51,12 @@ export default function TLDashboard() {
     staleTime: 30000,
   });
 
+  const { data: widgets } = useQuery({
+    queryKey: ["dashboard-widgets", "tl"],
+    queryFn: () => api.get("/dashboard/widgets").then((r) => r.data.data),
+    staleTime: 30000,
+  });
+
   if (isLoading) return <PageSpinner />;
 
   const engineers = data || [];
@@ -49,6 +66,22 @@ export default function TLDashboard() {
   const pendingValidations = allLogs.filter((l) => l.status === "Pending").length;
   const pendingLP = lpList.filter((r) => r.status === "LP_PENDING_ADMIN_APPROVAL").length;
   const activeClaims = claimList.filter((c) => ["CLAIM_VALIDATION_PENDING", "CLAIM_ADMIN_APPROVAL_PENDING"].includes(c.status)).length;
+
+  const w = widgets || {};
+  const pending = w.pending || {};
+  const today = w.today || {};
+
+  const pendingItems = [
+    { label: "Productivity Pending Validation", count: pending.validations || 0, to: "/tl/approvals",   color: "amber"  },
+    { label: "Staff Attendance Pending",        count: pending.attendance  || 0, to: "/tl/attendance",  color: "accent" },
+    { label: "LP Requests (Admin Review)",      count: pending.lpRequests  || 0, to: "/tl/lp-requests", color: "purple" },
+  ];
+
+  const todayStats = [
+    { label: "Validated Today",    value: today.validatedToday   || 0, icon: "ti-check",      color: "green"  },
+    { label: "Pending Validation", value: today.pendingValidation || 0, icon: "ti-clock",      color: "amber"  },
+    { label: "Active Claims",      value: activeClaims,               icon: "ti-file-dollar", color: "purple" },
+  ];
 
   const totals = engineers.reduce(
     (acc, e) => ({
@@ -88,6 +121,20 @@ export default function TLDashboard() {
         <Link to="/tl/lp-requests" className="block hover:shadow-md transition-shadow rounded-lg">
           <MetricCard label="Active Claims" value={activeClaims} sub={activeClaims > 0 ? "tap to review →" : "none in progress"} color={activeClaims > 0 ? "amber" : "green"} />
         </Link>
+      </div>
+
+      {/* Phase E widgets */}
+      <div className="mb-4">
+        <QuickActions actions={QUICK_ACTIONS} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <PendingActions items={pendingItems} />
+        <TodaySummary stats={todayStats} />
+      </div>
+
+      <div className="mb-5">
+        <ActivityTimeline />
       </div>
 
       {chartData.length > 0 && (

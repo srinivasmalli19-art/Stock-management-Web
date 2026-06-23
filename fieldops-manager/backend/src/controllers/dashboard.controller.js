@@ -12,6 +12,123 @@ const getMonthRange = () => {
   return { start, end };
 };
 
+const getTodayRange = () => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
+};
+
+const ACTIVITY_NOISE = ["NOTIFICATION_READ", "NOTIFICATIONS_READ_ALL", "LOGIN", "LOGOUT", "TOKEN_REFRESHED"];
+
+// GET /dashboard/activity — role-scoped recent audit events (latest 10)
+const getActivity = asyncHandler(async (req, res) => {
+  const { role, orgId, id: userId } = req.user;
+  const where = { action: { notIn: ACTIVITY_NOISE } };
+
+  if (role === "Engineer") {
+    where.userId = userId;
+  } else if (role === "Team_Leader") {
+    where.organisationId = orgId;
+    where.role = "Engineer";
+  } else if (role === "Store_Manager") {
+    where.organisationId = orgId;
+    where.entityType = { in: ["StockRequest", "RevokeRequest", "PurchaseInward", "ClaimRequest"] };
+  } else if (role === "Admin") {
+    where.organisationId = orgId;
+  }
+  // Super_Admin: no filter → global
+
+  const logs = await prisma.auditLog.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: { id: true, action: true, entityType: true, entityId: true, userName: true, role: true, createdAt: true },
+  });
+
+  return success(res, logs);
+});
+
+// GET /dashboard/widgets — role-scoped pending counts + today summary
+const getWidgets = asyncHandler(async (req, res) => {
+  const { role, orgId, id: userId } = req.user;
+  const { start: todayStart, end: todayEnd } = getTodayRange();
+
+  if (role === "Engineer") {
+    const [pendingStock, pendingApprovals, todayLog] = await Promise.all([
+      prisma.stockRequest.count({ where: { engineerId: userId, status: "Pending" } }),
+      prisma.productivityLog.count({ where: { engineerId: userId, status: { in: ["Pending", "Validated"] } } }),
+      prisma.productivityLog.findFirst({
+        where: { engineerId: userId, date: { gte: todayStart, lt: todayEnd } },
+        include: { items: true },
+      }),
+    ]);
+    const todayRevenue = (todayLog?.items || []).reduce((s, i) => s + i.saleValue, 0);
+    return success(res, {
+      pending: { stockRequests: pendingStock, pendingApprovals },
+      today: { callsClosed: todayLog?.callsClosed || 0, revenue: todayRevenue },
+    });
+  }
+
+  if (role === "Team_Leader") {
+    const [pendingValidations, pendingAttendance, pendingLP, validatedToday] = await Promise.all([
+      prisma.productivityLog.count({ where: { orgId, status: "Pending" } }),
+      prisma.staffAttendance.count({ where: { orgId, submissionStatus: "Pending" } }),
+      prisma.lpRequest.count({ where: { orgId, status: "LP_PENDING_ADMIN_APPROVAL" } }),
+      prisma.auditLog.count({ where: { organisationId: orgId, action: "PRODUCTIVITY_VALIDATED", createdAt: { gte: todayStart, lt: todayEnd } } }),
+    ]);
+    return success(res, {
+      pending: { validations: pendingValidations, attendance: pendingAttendance, lpRequests: pendingLP },
+      today: { validatedToday, pendingValidation: pendingValidations },
+    });
+  }
+
+  if (role === "Store_Manager") {
+    const [pendingStock, pendingPurchase, pendingClaims, stockToday, purchaseToday] = await Promise.all([
+      prisma.stockRequest.count({ where: { orgId, status: "Pending" } }),
+      prisma.purchaseInward.count({ where: { orgId, status: "Pending" } }),
+      prisma.claimRequest.count({ where: { orgId, status: "CLAIM_VALIDATION_PENDING" } }),
+      prisma.stockRequest.count({ where: { orgId, createdAt: { gte: todayStart, lt: todayEnd } } }),
+      prisma.purchaseInward.count({ where: { orgId, createdAt: { gte: todayStart, lt: todayEnd } } }),
+    ]);
+    return success(res, {
+      pending: { stockRequests: pendingStock, purchaseInward: pendingPurchase, claimValidations: pendingClaims },
+      today: { stockRequestsToday: stockToday, purchaseInwardToday: purchaseToday },
+    });
+  }
+
+  if (role === "Admin") {
+    const [pendingProductivity, pendingPurchase, pendingRevoke, pendingLP, pendingClaims, pendingAttendance, approvalsToday, usersToday] = await Promise.all([
+      prisma.productivityLog.count({ where: { orgId, status: "Validated" } }),
+      prisma.purchaseInward.count({ where: { orgId, status: "Pending" } }),
+      prisma.revokeRequest.count({ where: { orgId, status: "Revoke_Pending" } }),
+      prisma.lpRequest.count({ where: { orgId, status: "LP_PENDING_ADMIN_APPROVAL" } }),
+      prisma.claimRequest.count({ where: { orgId, status: "CLAIM_ADMIN_APPROVAL_PENDING" } }),
+      prisma.staffAttendance.count({ where: { orgId, submissionStatus: "Pending" } }),
+      prisma.auditLog.count({ where: { organisationId: orgId, action: "PRODUCTIVITY_APPROVED", createdAt: { gte: todayStart, lt: todayEnd } } }),
+      prisma.auditLog.count({ where: { organisationId: orgId, action: "USER_CREATED", createdAt: { gte: todayStart, lt: todayEnd } } }),
+    ]);
+    return success(res, {
+      pending: { productivity: pendingProductivity, purchase: pendingPurchase, revoke: pendingRevoke, lp: pendingLP, claims: pendingClaims, attendance: pendingAttendance },
+      today: { approvalsToday, usersToday },
+    });
+  }
+
+  // Super_Admin
+  const [totalOrgs, activeOrgs, totalUsers, auditEventsToday] = await Promise.all([
+    prisma.organisation.count(),
+    prisma.organisation.count({ where: { isActive: true } }),
+    prisma.user.count({ where: { role: { not: "Super_Admin" } } }),
+    prisma.auditLog.count({ where: { createdAt: { gte: todayStart, lt: todayEnd } } }),
+  ]);
+  return success(res, {
+    pending: {},
+    today: { auditEventsToday },
+    global: { totalOrgs, activeOrgs, totalUsers },
+  });
+});
+
 const engineerDashboard = asyncHandler(async (req, res) => {
   const { start, end } = getMonthRange();
   const engineerId = req.user.id;
@@ -113,4 +230,4 @@ const adminDashboard = asyncHandler(async (req, res) => {
   return success(res, { pendingProductivity, pendingPurchase, pendingRevoke });
 });
 
-module.exports = { engineerDashboard, teamLeaderDashboard, storeDashboard, adminDashboard };
+module.exports = { engineerDashboard, teamLeaderDashboard, storeDashboard, adminDashboard, getActivity, getWidgets };

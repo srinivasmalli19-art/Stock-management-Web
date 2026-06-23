@@ -4,7 +4,17 @@ import api from "../../services/api";
 import Card, { CardTitle } from "../../components/common/Card";
 import { PageSpinner } from "../../components/common/Spinner";
 import Badge from "../../components/common/Badge";
+import ActivityTimeline from "../../components/dashboard/ActivityTimeline";
+import QuickActions from "../../components/dashboard/QuickActions";
+import TodaySummary from "../../components/dashboard/TodaySummary";
 import { formatDate } from "../../utils/formatters";
+
+const QUICK_ACTIONS = [
+  { label: "Create Organisation", icon: "ti-building-plus",  to: "/superadmin/organisations" },
+  { label: "Manage Users",        icon: "ti-users",          to: "/superadmin/users"         },
+  { label: "Audit Logs",          icon: "ti-clipboard-list", to: "/superadmin/audit-logs"    },
+  { label: "Monitoring",          icon: "ti-activity",       to: "/superadmin/monitoring"    },
+];
 
 const StatTile = ({ icon: Icon, label, value, color = "accent" }) => {
   const colors = {
@@ -37,12 +47,28 @@ export default function SuperAdminDashboard() {
     staleTime: 60000,
   });
 
+  const { data: widgets } = useQuery({
+    queryKey: ["dashboard-widgets", "sa"],
+    queryFn: () => api.get("/dashboard/widgets").then((r) => r.data.data),
+    staleTime: 30000,
+  });
+
   if (isLoading) return <PageSpinner />;
 
   const orgList = orgs || [];
   const userList = users || [];
   const activeOrgs = orgList.filter((o) => o.isActive).length;
   const unassigned = userList.filter((u) => !u.orgId && u.role !== "Super_Admin").length;
+
+  const w = widgets || {};
+  const today = w.today || {};
+  const global = w.global || {};
+
+  const todayStats = [
+    { label: "Audit Events Today", value: today.auditEventsToday || 0, icon: "ti-activity",       color: "accent"  },
+    { label: "Total Orgs",         value: global.totalOrgs       || orgList.length, icon: "ti-building",        color: "purple" },
+    { label: "Active Orgs",        value: global.activeOrgs      || activeOrgs,     icon: "ti-building-check",  color: "green"  },
+  ];
 
   return (
     <div>
@@ -59,6 +85,19 @@ export default function SuperAdminDashboard() {
         <StatTile icon={ShieldCheck} label="Active Orgs" value={activeOrgs} color="green" />
         <StatTile icon={Users} label="Total Users" value={userList.length} color="purple" />
         <StatTile icon={Users} label="Unassigned Users" value={unassigned} color={unassigned > 0 ? "amber" : "green"} />
+      </div>
+
+      {/* Phase E widgets */}
+      <div className="mb-4">
+        <QuickActions actions={QUICK_ACTIONS} />
+      </div>
+
+      <div className="mb-4">
+        <TodaySummary stats={todayStats} />
+      </div>
+
+      <div className="mb-5">
+        <ActivityTimeline />
       </div>
 
       <Card>
