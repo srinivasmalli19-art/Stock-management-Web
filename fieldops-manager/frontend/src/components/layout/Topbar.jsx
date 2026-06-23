@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import NotificationBell from "../common/NotificationBell";
 
 const PAGE_TITLES = {
   "/superadmin/dashboard": "Global Overview",
@@ -32,6 +33,7 @@ const PAGE_TITLES = {
   "/engineer/productivity": "Log Productivity",
   "/engineer/status": "Approval Status",
   "/engineer/stock": "My Van Stock",
+  "/notifications": "Notifications",
 };
 
 export default function Topbar({ onMenuClick }) {
@@ -63,10 +65,13 @@ export default function Topbar({ onMenuClick }) {
         </button>
         <h1 className="text-base font-semibold text-text">{title}</h1>
       </div>
-      <span className="text-xs text-muted">
-        <span className="hidden md:inline">{dateStrFull}</span>
-        <span className="md:hidden">{dateStrShort}</span>
-      </span>
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <span className="text-xs text-muted">
+          <span className="hidden md:inline">{dateStrFull}</span>
+          <span className="md:hidden">{dateStrShort}</span>
+        </span>
+      </div>
     </header>
   );
 }

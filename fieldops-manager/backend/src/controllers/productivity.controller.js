@@ -2,6 +2,7 @@ const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { writeAudit } = require("../utils/auditService");
+const { writeNotification, roleUserIds } = require("../utils/notificationService");
 
 const buildWhere = (req) => {
   const { engineerId, month, status } = req.query;
@@ -72,6 +73,18 @@ const createLog = asyncHandler(async (req, res) => {
   });
 
   await writeAudit({ req, action: "PRODUCTIVITY_SUBMITTED", entityType: "Productivity", entityId: log.id, newValue: { engineerId, date, callsClosed: callsClosed || 0, itemCount: items.length } });
+
+  const tlIds = await roleUserIds(orgId, "Team_Leader");
+  await writeNotification({
+    userIds: tlIds,
+    orgId,
+    title: "New Productivity Log",
+    message: `${req.user.name} submitted a productivity log for ${date}.`,
+    type: "action_required",
+    entityType: "Productivity",
+    entityId: log.id,
+  });
+
   return created(res, log, "Productivity log submitted for validation");
 });
 
@@ -90,6 +103,17 @@ const validateLog = asyncHandler(async (req, res) => {
   });
 
   await writeAudit({ req, action: "PRODUCTIVITY_VALIDATED", entityType: "Productivity", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Validated", tlNote: tlNote || "" } });
+
+  await writeNotification({
+    userIds: [log.engineerId],
+    orgId: log.orgId,
+    title: "Log Validated by Team Leader",
+    message: `Your productivity log for ${log.date.toISOString().slice(0, 10)} has been validated and sent to Admin for approval.`,
+    type: "approved",
+    entityType: "Productivity",
+    entityId: id,
+  });
+
   return success(res, updated, "Log validated");
 });
 
@@ -108,6 +132,17 @@ const rejectTL = asyncHandler(async (req, res) => {
   });
 
   await writeAudit({ req, action: "PRODUCTIVITY_REJECTED", entityType: "Productivity", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Rejected", tlNote: tlNote || "" } });
+
+  await writeNotification({
+    userIds: [log.engineerId],
+    orgId: log.orgId,
+    title: "Log Rejected by Team Leader",
+    message: `Your productivity log for ${log.date.toISOString().slice(0, 10)} was rejected.${tlNote ? ` Note: ${tlNote}` : ""}`,
+    type: "rejected",
+    entityType: "Productivity",
+    entityId: id,
+  });
+
   return success(res, updated, "Log rejected");
 });
 
@@ -163,6 +198,17 @@ const approveLog = asyncHandler(async (req, res) => {
 
   const totalIncentive = items.reduce((s, i) => s + (i.adminIncentive || 0), 0);
   await writeAudit({ req, action: "PRODUCTIVITY_APPROVED", entityType: "Productivity", entityId: id, oldValue: { status: "Validated" }, newValue: { status: "Approved", engineerId: log.engineerId, orgId: log.orgId, totalIncentive, adminNote: adminNote || "" } });
+
+  await writeNotification({
+    userIds: [log.engineerId],
+    orgId: log.orgId,
+    title: "Productivity Log Approved",
+    message: `Your productivity log has been approved. Incentive earned: ₹${totalIncentive.toLocaleString("en-IN")}.`,
+    type: "approved",
+    entityType: "Productivity",
+    entityId: id,
+  });
+
   return success(res, {}, `Approved! ₹${totalIncentive.toLocaleString("en-IN")} incentive saved. Attendance marked Present.`);
 });
 
@@ -181,6 +227,17 @@ const rejectAdmin = asyncHandler(async (req, res) => {
   });
 
   await writeAudit({ req, action: "PRODUCTIVITY_REJECTED_BY_ADMIN", entityType: "Productivity", entityId: id, oldValue: { status: "Validated" }, newValue: { status: "Rejected", engineerId: log.engineerId, orgId: log.orgId, adminNote: adminNote || "" } });
+
+  await writeNotification({
+    userIds: [log.engineerId],
+    orgId: log.orgId,
+    title: "Productivity Log Rejected by Admin",
+    message: `Your productivity log was rejected by Admin.${adminNote ? ` Note: ${adminNote}` : ""}`,
+    type: "rejected",
+    entityType: "Productivity",
+    entityId: id,
+  });
+
   return success(res, updated, "Log rejected");
 });
 

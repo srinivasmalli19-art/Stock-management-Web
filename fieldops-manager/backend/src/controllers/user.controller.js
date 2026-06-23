@@ -3,6 +3,7 @@ const { hashPassword } = require("../utils/passwordUtils");
 const { success, created, error, paginate } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { writeAudit } = require("../utils/auditService");
+const { writeNotification } = require("../utils/notificationService");
 
 const safeUser = (u) => ({
   id: u.id, name: u.name, email: u.email, role: u.role,
@@ -58,6 +59,17 @@ const createUser = asyncHandler(async (req, res) => {
   }
 
   await writeAudit({ req, action: "USER_CREATED", entityType: "User", entityId: user.id, newValue: { email: user.email, role: user.role, orgId: user.orgId } });
+
+  await writeNotification({
+    userIds: [user.id],
+    orgId: user.orgId || null,
+    title: "Welcome to FieldOps Manager",
+    message: `Your account has been created with the role: ${role}. Log in using your email and the password provided by your Admin.`,
+    type: "info",
+    entityType: "User",
+    entityId: user.id,
+  });
+
   return created(res, safeUser(user), "User created successfully");
 });
 
@@ -137,6 +149,19 @@ const assignOrganisation = asyncHandler(async (req, res) => {
 
   const updated = await prisma.user.update({ where: { id }, data: { orgId: orgId || null } });
   await writeAudit({ req, action: "USER_ORG_REASSIGNED", entityType: "User", entityId: id, oldValue: { orgId: user.orgId ?? null }, newValue: { orgId: orgId || null } });
+
+  await writeNotification({
+    userIds: [id],
+    orgId: orgId || null,
+    title: "Organisation Updated",
+    message: orgId
+      ? "Your organisation assignment has been updated. Please log in again for the change to take effect."
+      : "You have been removed from your organisation.",
+    type: "info",
+    entityType: "User",
+    entityId: id,
+  });
+
   return success(res, safeUser(updated), "User organisation updated");
 });
 

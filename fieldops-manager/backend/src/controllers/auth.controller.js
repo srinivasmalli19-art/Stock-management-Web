@@ -4,6 +4,7 @@ const { generateAccessToken, generateRefreshToken, verifyRefreshToken, getRefres
 const { success, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { writeAudit } = require("../utils/auditService");
+const { writeNotification } = require("../utils/notificationService");
 
 // sameSite "none" required for cross-domain cookie (frontend and backend on different domains)
 // secure must be true when sameSite is "none"
@@ -103,6 +104,16 @@ const changePassword = asyncHandler(async (req, res) => {
     entityType: "User",
     entityId: userId,
     newValue: { changedAt: new Date().toISOString() },
+  });
+
+  await writeNotification({
+    userIds: [userId],
+    orgId: req.user.orgId || null,
+    title: "Password Changed",
+    message: "Your account password was changed successfully. If you did not make this change, contact your Admin immediately.",
+    type: "info",
+    entityType: "User",
+    entityId: userId,
   });
 
   return success(res, {}, "Password changed successfully");

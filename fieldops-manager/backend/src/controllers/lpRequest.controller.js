@@ -2,6 +2,7 @@ const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { writeAudit } = require("../utils/auditService");
+const { writeNotification, roleUserIds } = require("../utils/notificationService");
 
 function generateRequestId() {
   const now = new Date();
@@ -46,7 +47,20 @@ const createLpRequest = asyncHandler(async (req, res) => {
     },
     include: { claim: true },
   });
+
   await writeAudit({ req, action: "LP_CREATED", entityType: "LpRequest", entityId: request.id, newValue: { requestId: request.requestId, jobId, totalCost: request.totalCost } });
+
+  const adminIds = await roleUserIds(orgId, "Admin");
+  await writeNotification({
+    userIds: adminIds,
+    orgId,
+    title: "New LP Request",
+    message: `${req.user.name} submitted LP request ${request.requestId} for ₹${request.totalCost.toLocaleString("en-IN")}.`,
+    type: "action_required",
+    entityType: "LpRequest",
+    entityId: request.id,
+  });
+
   return created(res, request, "LP request submitted for Admin approval");
 });
 
@@ -75,6 +89,26 @@ const adminApproveLp = asyncHandler(async (req, res) => {
 
   const auditAction = action === "approve" ? "LP_APPROVED" : "LP_REJECTED";
   await writeAudit({ req, action: auditAction, entityType: "LpRequest", entityId: id, oldValue: { status: request.status }, newValue: { status: newStatus, remarks: remarks || null } });
+
+  // Notify the TL who created this LP request
+  const tlUser = await prisma.user.findUnique({
+    where: { email: request.tlEmail },
+    select: { id: true },
+  });
+  if (tlUser) {
+    await writeNotification({
+      userIds: [tlUser.id],
+      orgId: request.orgId,
+      title: action === "approve" ? "LP Request Approved" : "LP Request Rejected",
+      message: action === "approve"
+        ? `Your LP request ${request.requestId} has been approved. You can now raise a claim.`
+        : `Your LP request ${request.requestId} was rejected.${remarks ? ` Reason: ${remarks}` : ""}`,
+      type: action === "approve" ? "approved" : "rejected",
+      entityType: "LpRequest",
+      entityId: id,
+    });
+  }
+
   const msg = action === "approve"
     ? "LP request approved. Team Leader can now raise a claim."
     : "LP request rejected.";

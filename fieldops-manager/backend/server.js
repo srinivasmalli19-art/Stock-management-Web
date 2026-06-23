@@ -27,6 +27,7 @@ const staffAttendanceRoutes = require("./src/routes/staffAttendance.routes");
 const attendanceLedgerRoutes = require("./src/routes/attendanceLedger.routes");
 const auditLogRoutes = require("./src/routes/auditLog.routes");
 const monitoringRoutes = require("./src/routes/monitoring.routes");
+const notificationRoutes = require("./src/routes/notification.routes");
 
 const app = express();
 
@@ -89,6 +90,7 @@ app.use("/api/staff-attendance", staffAttendanceRoutes);
 app.use("/api/attendance-ledger", attendanceLedgerRoutes);
 app.use("/api/audit-logs", auditLogRoutes);
 app.use("/api/monitoring", monitoringRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/health", (req, res) =>
   res.json({

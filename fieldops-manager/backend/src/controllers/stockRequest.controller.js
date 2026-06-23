@@ -2,6 +2,7 @@ const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { writeAudit } = require("../utils/auditService");
+const { writeNotification, roleUserIds } = require("../utils/notificationService");
 
 const getRequests = asyncHandler(async (req, res) => {
   const { status, engineerId } = req.query;
@@ -40,6 +41,18 @@ const createRequest = asyncHandler(async (req, res) => {
   });
 
   await writeAudit({ req, action: "STOCK_REQUEST_CREATED", entityType: "StockRequest", entityId: request.id, newValue: { skuId, qty } });
+
+  const smIds = await roleUserIds(orgId, "Store_Manager");
+  await writeNotification({
+    userIds: smIds,
+    orgId,
+    title: "New Stock Request",
+    message: `${req.user.name} requested ${qty} unit(s) of ${sku.name}.`,
+    type: "action_required",
+    entityType: "StockRequest",
+    entityId: request.id,
+  });
+
   return created(res, request, "Stock request submitted");
 });
 
@@ -84,6 +97,17 @@ const approveRequest = asyncHandler(async (req, res) => {
   });
 
   await writeAudit({ req, action: "STOCK_REQUEST_APPROVED", entityType: "StockRequest", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Approved", qty: request.qty, skuName: request.sku.name } });
+
+  await writeNotification({
+    userIds: [request.engineerId],
+    orgId: request.orgId,
+    title: "Stock Request Approved",
+    message: `Your request for ${request.qty} unit(s) of ${request.sku.name} has been approved.`,
+    type: "approved",
+    entityType: "StockRequest",
+    entityId: id,
+  });
+
   return success(res, {}, `Approved! ${request.qty} units allocated to engineer.`);
 });
 
@@ -91,20 +115,31 @@ const rejectRequest = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { note } = req.body;
 
-  const request = await prisma.stockRequest.findUnique({ where: { id } });
+  const request = await prisma.stockRequest.findUnique({ where: { id }, include: { sku: true } });
   if (!request) return error(res, "Request not found", 404);
   if (req.user.role !== "Super_Admin" && request.orgId !== req.user.orgId) return error(res, "Request not found", 404);
   if (request.status !== "Pending") return error(res, "Only Pending requests can be rejected", 400);
 
   await prisma.stockRequest.update({ where: { id }, data: { status: "Rejected", note: note || "" } });
   await writeAudit({ req, action: "STOCK_REQUEST_REJECTED", entityType: "StockRequest", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Rejected", note: note || null } });
+
+  await writeNotification({
+    userIds: [request.engineerId],
+    orgId: request.orgId,
+    title: "Stock Request Rejected",
+    message: `Your request for ${request.qty} unit(s) of ${request.sku?.name || "stock"} was rejected.${note ? ` Note: ${note}` : ""}`,
+    type: "rejected",
+    entityType: "StockRequest",
+    entityId: id,
+  });
+
   return success(res, {}, "Request rejected");
 });
 
 const submitRevoke = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const request = await prisma.stockRequest.findUnique({ where: { id }, include: { revokeRequest: true } });
+  const request = await prisma.stockRequest.findUnique({ where: { id }, include: { revokeRequest: true, sku: true } });
   if (!request) return error(res, "Request not found", 404);
   if (req.user.role !== "Super_Admin" && request.orgId !== req.user.orgId) return error(res, "Request not found", 404);
   if (request.status !== "Approved") return error(res, "Only Approved requests can be revoked", 400);
@@ -127,6 +162,18 @@ const submitRevoke = asyncHandler(async (req, res) => {
   });
 
   await writeAudit({ req, action: "REVOKE_INITIATED", entityType: "RevokeRequest", entityId: revokeId, newValue: { stockRequestId: id, engineerId: request.engineerId, skuId: request.skuId, qty: request.qty } });
+
+  const adminIds = await roleUserIds(request.orgId, "Admin");
+  await writeNotification({
+    userIds: adminIds,
+    orgId: request.orgId,
+    title: "Stock Revoke Request",
+    message: `${req.user.name} submitted a revoke request for ${request.qty} unit(s) of ${request.sku?.name || "stock"}.`,
+    type: "action_required",
+    entityType: "RevokeRequest",
+    entityId: revokeId,
+  });
+
   return success(res, {}, "Revoke request submitted to Admin");
 });
 

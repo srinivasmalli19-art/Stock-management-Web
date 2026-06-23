@@ -2,6 +2,7 @@ const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { writeAudit } = require("../utils/auditService");
+const { writeNotification, roleUserIds } = require("../utils/notificationService");
 
 const getClaimRequests = asyncHandler(async (req, res) => {
   const where = {};
@@ -51,7 +52,21 @@ const createClaimRequest = asyncHandler(async (req, res) => {
     },
     include: { lpRequest: true },
   });
+
   await writeAudit({ req, action: "CLAIM_CREATED", entityType: "ClaimRequest", entityId: claim.id, newValue: { lpRequestId, claimAmount: amount } });
+
+  // Notify Store Managers to validate the claim
+  const smIds = await roleUserIds(orgId, "Store_Manager");
+  await writeNotification({
+    userIds: smIds,
+    orgId,
+    title: "New Claim Awaiting Validation",
+    message: `A claim of ₹${amount.toLocaleString("en-IN")} has been submitted for LP ${lp.requestId}. Please validate.`,
+    type: "action_required",
+    entityType: "ClaimRequest",
+    entityId: claim.id,
+  });
+
   return created(res, claim, "Claim request submitted for Store Manager validation");
 });
 
@@ -80,6 +95,40 @@ const validateClaim = asyncHandler(async (req, res) => {
 
   const validateAuditAction = action === "validate" ? "CLAIM_VALIDATED" : "CLAIM_REJECTED";
   await writeAudit({ req, action: validateAuditAction, entityType: "ClaimRequest", entityId: id, oldValue: { status: claim.status }, newValue: { status: newStatus, remarks: remarks || null } });
+
+  // Notify the TL who submitted the claim
+  const tlUser = await prisma.user.findUnique({
+    where: { email: updated.lpRequest.tlEmail },
+    select: { id: true },
+  });
+  if (tlUser) {
+    await writeNotification({
+      userIds: [tlUser.id],
+      orgId: claim.orgId,
+      title: action === "validate" ? "Claim Validated" : "Claim Rejected by Store",
+      message: action === "validate"
+        ? "Your claim has been validated by Store Manager and forwarded to Admin for final approval."
+        : `Your claim was rejected by Store Manager.${remarks ? ` Reason: ${remarks}` : ""}`,
+      type: action === "validate" ? "approved" : "rejected",
+      entityType: "ClaimRequest",
+      entityId: id,
+    });
+  }
+
+  // If validated, also notify Admins for final approval
+  if (action === "validate") {
+    const adminIds = await roleUserIds(claim.orgId, "Admin");
+    await writeNotification({
+      userIds: adminIds,
+      orgId: claim.orgId,
+      title: "Claim Awaiting Final Approval",
+      message: `A claim validated by Store Manager requires your final approval.`,
+      type: "action_required",
+      entityType: "ClaimRequest",
+      entityId: id,
+    });
+  }
+
   const msg = action === "validate"
     ? "Claim validated and forwarded to Admin"
     : "Claim rejected by Store Manager";
@@ -111,6 +160,26 @@ const adminApproveClaim = asyncHandler(async (req, res) => {
 
   const adminAuditAction = action === "approve" ? "CLAIM_APPROVED" : "CLAIM_REJECTED";
   await writeAudit({ req, action: adminAuditAction, entityType: "ClaimRequest", entityId: id, oldValue: { status: claim.status }, newValue: { status: newStatus, remarks: remarks || null } });
+
+  // Notify the TL who submitted the original LP request
+  const tlUser = await prisma.user.findUnique({
+    where: { email: updated.lpRequest.tlEmail },
+    select: { id: true },
+  });
+  if (tlUser) {
+    await writeNotification({
+      userIds: [tlUser.id],
+      orgId: claim.orgId,
+      title: action === "approve" ? "Claim Approved" : "Claim Rejected by Admin",
+      message: action === "approve"
+        ? "Your claim has been approved by Admin."
+        : `Your claim was rejected by Admin.${remarks ? ` Reason: ${remarks}` : ""}`,
+      type: action === "approve" ? "approved" : "rejected",
+      entityType: "ClaimRequest",
+      entityId: id,
+    });
+  }
+
   return success(res, updated, action === "approve" ? "Claim approved!" : "Claim rejected");
 });
 

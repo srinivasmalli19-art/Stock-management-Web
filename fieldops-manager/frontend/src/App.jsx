@@ -45,6 +45,7 @@ import AdminLPApprovals from "./pages/admin/AdminLPApprovals";
 import AdminAttendanceApproval from "./pages/admin/AdminAttendanceApproval";
 import AdminAttendanceLedger from "./pages/admin/AdminAttendanceLedger";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
+import Notifications from "./pages/common/Notifications";
 
 const ROOT_ROUTES = {
   Super_Admin: "/superadmin/dashboard",
@@ -110,6 +111,9 @@ export default function App() {
             <Route path="/admin/skus" element={<AdminSkuRegistry />} />
             <Route path="/admin/users" element={<AdminUserRegistry />} />
             <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+
+            {/* Notifications — accessible to all authenticated roles */}
+            <Route path="/notifications" element={<Notifications />} />
           </Route>
         </Route>
 

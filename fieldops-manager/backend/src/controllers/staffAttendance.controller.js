@@ -2,6 +2,7 @@ const prisma = require("../config/db");
 const { success, created, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { writeAudit } = require("../utils/auditService");
+const { writeNotification, roleUserIds } = require("../utils/notificationService");
 
 const VALID_STATUSES = ["Present", "Absent", "Half_Day", "Leave"];
 
@@ -15,7 +16,7 @@ const submitAttendance = asyncHandler(async (req, res) => {
   }
 
   const dateStr = date || new Date().toISOString().split("T")[0];
-  const dateVal = new Date(dateStr); // YYYY-MM-DD parsed as UTC midnight — consistent with Prisma @db.Date
+  const dateVal = new Date(dateStr);
 
   const existing = await prisma.staffAttendance.findUnique({
     where: { userId_date: { userId, date: dateVal } },
@@ -36,6 +37,17 @@ const submitAttendance = asyncHandler(async (req, res) => {
   });
 
   await writeAudit({ req, action: "ATTENDANCE_SUBMITTED", entityType: "StaffAttendance", entityId: record.id, newValue: { date: dateStr, attendanceStatus } });
+
+  const adminIds = await roleUserIds(orgId, "Admin");
+  await writeNotification({
+    userIds: adminIds,
+    orgId,
+    title: "Attendance Submitted",
+    message: `${name} submitted attendance (${attendanceStatus}) for ${dateStr}.`,
+    type: "action_required",
+    entityType: "StaffAttendance",
+    entityId: record.id,
+  });
 
   return created(res, record, "Attendance submitted for approval");
 });
@@ -135,6 +147,16 @@ const approveAttendance = asyncHandler(async (req, res) => {
 
   await writeAudit({ req, action: "ATTENDANCE_APPROVED", entityType: "StaffAttendance", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Approved", userId: record.userId, date: record.date.toISOString().split("T")[0] } });
 
+  await writeNotification({
+    userIds: [record.userId],
+    orgId: record.orgId,
+    title: "Attendance Approved",
+    message: `Your attendance for ${record.date.toISOString().slice(0, 10)} has been approved.`,
+    type: "approved",
+    entityType: "StaffAttendance",
+    entityId: id,
+  });
+
   return success(res, updated, "Attendance approved — ledger entry created");
 });
 
@@ -163,6 +185,16 @@ const rejectAttendance = asyncHandler(async (req, res) => {
   });
 
   await writeAudit({ req, action: "ATTENDANCE_REJECTED", entityType: "StaffAttendance", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Rejected", userId: record.userId, rejectedReason: rejectedReason || null } });
+
+  await writeNotification({
+    userIds: [record.userId],
+    orgId: record.orgId,
+    title: "Attendance Rejected",
+    message: `Your attendance submission was rejected.${rejectedReason ? ` Reason: ${rejectedReason}` : ""}`,
+    type: "rejected",
+    entityType: "StaffAttendance",
+    entityId: id,
+  });
 
   return success(res, updated, "Attendance rejected");
 });

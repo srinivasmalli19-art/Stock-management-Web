@@ -95,6 +95,7 @@ model User {
   attendance       Attendance[]
   staffAttendance  StaffAttendance[]
   refreshTokens    RefreshToken[]
+  notifications    Notification[]
 
   @@index([orgId])
   @@index([orgId, role])
@@ -363,6 +364,27 @@ model AttendanceLedger {
   @@index([orgId, date])
   @@index([userId])
   @@index([orgId, userId])
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  organisationId String?
+  title          String
+  message        String
+  type           String   @default("info") // info | action_required | approved | rejected
+  entityType     String
+  entityId       String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([organisationId])
+  @@index([createdAt])
 }
 
 // ─── Audit Log ────────────────────────────────────────────────────────────────
