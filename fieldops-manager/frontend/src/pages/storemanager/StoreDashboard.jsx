@@ -36,7 +36,7 @@ export default function StoreDashboard() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-2xl font-bold">Store Dashboard</h1>
+        <h1 className="text-3xl font-bold">Store Dashboard</h1>
         <p className="text-sm text-muted mt-0.5">Inventory, stock requests, and purchase management</p>
       </div>
 

@@ -51,24 +51,26 @@ export default function SuperAdminUsers() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-xl font-bold flex items-center gap-2">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
           <Users size={20} />
           All Users
         </h1>
         <p className="text-sm text-muted mt-0.5">{userList.length} users across all organisations</p>
       </div>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <input
           className="input flex-1"
           placeholder="Search by name or email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search users"
         />
         <select
-          className="input w-48"
+          className="input sm:w-48"
           value={filterOrg}
           onChange={(e) => setFilterOrg(e.target.value)}
+          aria-label="Filter by organisation"
         >
           <option value="">All Organisations</option>
           <option value="__unassigned__">Unassigned</option>

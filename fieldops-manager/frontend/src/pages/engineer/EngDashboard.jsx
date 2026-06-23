@@ -58,7 +58,7 @@ export default function EngDashboard() {
     <div>
       <div className="flex items-end justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-text">Welcome, {firstName}</h1>
+          <h1 className="text-3xl font-bold text-text">Welcome, {firstName}</h1>
           <p className="text-sm text-muted mt-0.5">Month-to-date · {formatMonth(prefix)}</p>
         </div>
       </div>
@@ -123,41 +123,81 @@ export default function EngDashboard() {
         <CardTitle right={`${logs.length} entries`}>Monthly Progress — {formatMonth(prefix)}</CardTitle>
         {logs.length === 0 ? (
           <EmptyState
-          icon="ti-clipboard-off"
-          message="No entries this month"
-          sub="Submit a productivity log to track your daily calls and revenue."
-        />
+            icon="ti-clipboard-off"
+            message="No entries this month"
+            sub="Submit a productivity log to track your daily calls and revenue."
+          />
         ) : (
-          <div className="overflow-x-auto tbl">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th><th>Calls</th><th>Accessories</th><th>Revenue</th><th>Incentive</th><th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...logs].sort((a, b) => new Date(b.date) - new Date(a.date)).map((log) => {
-                  const lrev = (log.items || []).reduce((s, i) => s + i.saleValue, 0);
-                  const linc = log.status === "Approved"
-                    ? (log.items || []).reduce((s, i) => s + (i.adminIncentive || 0), 0)
-                    : null;
-                  const accessories = (log.items || [])
-                    .map((i) => `${i.sku?.name || i.skuId} ×${i.qty}`)
-                    .join(", ") || "—";
-                  return (
-                    <tr key={log.id}>
-                      <td>{formatDate(log.date)}</td>
-                      <td><strong>{log.callsClosed}</strong></td>
-                      <td className="text-xs text-muted">{accessories}</td>
-                      <td>{formatCurrency(lrev)}</td>
-                      <td>{linc !== null ? formatCurrency(linc) : <span className="text-muted">—</span>}</td>
-                      <td><Badge status={log.status} /></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Mobile card layout */}
+            <div className="sm:hidden space-y-3">
+              {[...logs].sort((a, b) => new Date(b.date) - new Date(a.date)).map((log) => {
+                const lrev = (log.items || []).reduce((s, i) => s + i.saleValue, 0);
+                const linc = log.status === "Approved"
+                  ? (log.items || []).reduce((s, i) => s + (i.adminIncentive || 0), 0)
+                  : null;
+                const accessories = (log.items || []).map((i) => `${i.sku?.name || i.skuId} ×${i.qty}`).join(", ");
+                return (
+                  <div key={log.id} className="border border-border rounded-lg p-3.5">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-sm font-semibold">{formatDate(log.date)}</span>
+                      <Badge status={log.status} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                      <div>
+                        <span className="text-xs text-muted block">Calls</span>
+                        <span className="text-sm font-bold">{log.callsClosed}</span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted block">Revenue</span>
+                        <span className="text-sm font-semibold">{formatCurrency(lrev)}</span>
+                      </div>
+                      {linc !== null && (
+                        <div className="col-span-2">
+                          <span className="text-xs text-muted block">Incentive</span>
+                          <span className="text-sm font-semibold text-success">{formatCurrency(linc)}</span>
+                        </div>
+                      )}
+                    </div>
+                    {accessories && (
+                      <p className="text-xs text-muted mt-2 truncate">{accessories}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto tbl">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Calls</th><th>Accessories</th><th>Revenue</th><th>Incentive</th><th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...logs].sort((a, b) => new Date(b.date) - new Date(a.date)).map((log) => {
+                    const lrev = (log.items || []).reduce((s, i) => s + i.saleValue, 0);
+                    const linc = log.status === "Approved"
+                      ? (log.items || []).reduce((s, i) => s + (i.adminIncentive || 0), 0)
+                      : null;
+                    const accessories = (log.items || [])
+                      .map((i) => `${i.sku?.name || i.skuId} ×${i.qty}`)
+                      .join(", ") || "—";
+                    return (
+                      <tr key={log.id}>
+                        <td>{formatDate(log.date)}</td>
+                        <td><strong>{log.callsClosed}</strong></td>
+                        <td className="text-xs text-muted">{accessories}</td>
+                        <td>{formatCurrency(lrev)}</td>
+                        <td>{linc !== null ? formatCurrency(linc) : <span className="text-muted">—</span>}</td>
+                        <td><Badge status={log.status} /></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
     </div>

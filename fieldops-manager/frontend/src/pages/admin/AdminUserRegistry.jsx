@@ -130,13 +130,17 @@ export default function AdminUserRegistry() {
 
   return (
     <div>
-      <div className="mb-5"><h1 className="text-xl font-bold">User Registry</h1></div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">User Registry</h1>
+        <p className="text-sm text-muted mt-0.5">Manage all users in your organisation</p>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <Card>
           <CardTitle>Add New User</CardTitle>
-          <FormField label="Full Name">
+          <FormField label="Full Name" htmlFor="new-user-name">
             <input
+              id="new-user-name"
               type="text"
               className={inputClass}
               value={newUser.name}
@@ -144,8 +148,9 @@ export default function AdminUserRegistry() {
               placeholder="Full name"
             />
           </FormField>
-          <FormField label="Email">
+          <FormField label="Email" htmlFor="new-user-email">
             <input
+              id="new-user-email"
               type="email"
               className={inputClass}
               value={newUser.email}
@@ -153,14 +158,15 @@ export default function AdminUserRegistry() {
               placeholder="user@company.com"
             />
           </FormField>
-          <FormField label="Role">
-            <select className={selectClass} value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
+          <FormField label="Role" htmlFor="new-user-role">
+            <select id="new-user-role" className={selectClass} value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
               {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
             </select>
           </FormField>
-          <FormField label="Password">
+          <FormField label="Password" htmlFor="new-user-password">
             <div className="flex gap-2">
               <input
+                id="new-user-password"
                 type="text"
                 className={inputClass}
                 value={newUser.password}

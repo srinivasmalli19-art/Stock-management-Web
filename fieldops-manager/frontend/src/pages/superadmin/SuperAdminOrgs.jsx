@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { Plus, Building2 } from "lucide-react";
 import api from "../../services/api";
 import Card, { CardTitle } from "../../components/common/Card";
 import Button from "../../components/common/Button";
@@ -51,116 +50,119 @@ export default function SuperAdminOrgs() {
 
   return (
     <div>
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <Building2 size={20} />
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <i className="ti ti-building text-accent text-2xl" />
             Organisation Management
           </h1>
           <p className="text-sm text-muted mt-0.5">{orgs.length} organisation{orgs.length !== 1 ? "s" : ""} registered</p>
         </div>
         <Button variant="primary" onClick={() => { setShowForm(!showForm); setForm(EMPTY); }}>
-          <Plus size={15} /> New Org
+          <i className="ti ti-plus" /> New Org
         </Button>
       </div>
 
       {showForm && (
-        <div className="form-reveal mb-4">
-          <Card>
-            <CardTitle>Register New Organisation</CardTitle>
-            <form onSubmit={handleSubmit} className="mt-4 space-y-5">
-
-              <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Organisation Details</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="label">Organisation Name *</label>
-                    <input
-                      className="input"
-                      placeholder="e.g. Logitask Mumbai"
-                      value={form.name}
-                      onChange={set("name")}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="label">Site Code *</label>
-                    <input
-                      className="input font-mono"
-                      placeholder="e.g. MUM-001"
-                      value={form.siteCode}
-                      onChange={(e) => setForm((f) => ({ ...f, siteCode: e.target.value.toUpperCase() }))}
-                      pattern="[A-Z0-9\-]+"
-                      maxLength={20}
-                      required
-                    />
-                    <p className="text-xs text-muted mt-0.5">Alphanumeric + hyphens, unique site identifier</p>
-                  </div>
+        <form onSubmit={handleSubmit} className="form-reveal mb-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Card 1: Organisation Details */}
+            <Card>
+              <CardTitle>Organisation Details</CardTitle>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="sa-org-name" className="label">Organisation Name *</label>
+                  <input
+                    id="sa-org-name"
+                    className="input"
+                    placeholder="e.g. Logitask Mumbai"
+                    value={form.name}
+                    onChange={set("name")}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="sa-org-code" className="label">Site Code *</label>
+                  <input
+                    id="sa-org-code"
+                    className="input font-mono"
+                    placeholder="e.g. MUM-001"
+                    value={form.siteCode}
+                    onChange={(e) => setForm((f) => ({ ...f, siteCode: e.target.value.toUpperCase() }))}
+                    pattern="[A-Z0-9\-]+"
+                    maxLength={20}
+                    required
+                  />
+                  <p className="text-xs text-muted mt-1">Alphanumeric + hyphens, must be unique across all orgs</p>
                 </div>
               </div>
+            </Card>
 
-              <hr className="border-border" />
-
-              <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Organisation Admin</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="label">Admin Name *</label>
+            {/* Card 2: Organisation Admin */}
+            <Card>
+              <CardTitle>Organisation Admin</CardTitle>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="sa-admin-name" className="label">Admin Name *</label>
+                  <input
+                    id="sa-admin-name"
+                    className="input"
+                    placeholder="e.g. Rajesh Sharma"
+                    value={form.adminName}
+                    onChange={set("adminName")}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="sa-admin-email" className="label">Admin Email *</label>
+                  <input
+                    id="sa-admin-email"
+                    type="email"
+                    className="input"
+                    placeholder="e.g. admin@logitask.in"
+                    value={form.adminEmail}
+                    onChange={set("adminEmail")}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="sa-admin-password" className="label">Password *</label>
+                  <div className="flex gap-2">
                     <input
-                      className="input"
-                      placeholder="e.g. Rajesh Sharma"
-                      value={form.adminName}
-                      onChange={set("adminName")}
+                      id="sa-admin-password"
+                      type="text"
+                      className="input font-mono flex-1"
+                      placeholder="Min 8 characters"
+                      value={form.password}
+                      onChange={set("password")}
+                      minLength={8}
                       required
                     />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setForm((f) => ({ ...f, password: genPassword() }))}
+                      aria-label="Generate random password"
+                    >
+                      <i className="ti ti-refresh" /> Generate
+                    </Button>
                   </div>
-                  <div>
-                    <label className="label">Admin Email *</label>
-                    <input
-                      type="email"
-                      className="input"
-                      placeholder="e.g. admin@logitask.in"
-                      value={form.adminEmail}
-                      onChange={set("adminEmail")}
-                      required
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="label">Password *</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="input font-mono flex-1"
-                        placeholder="Min 8 characters"
-                        value={form.password}
-                        onChange={set("password")}
-                        minLength={8}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => setForm((f) => ({ ...f, password: genPassword() }))}
-                      >
-                        <i className="ti ti-refresh" /> Generate
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted mt-0.5">Share this password with the Admin after creation.</p>
-                  </div>
+                  <p className="text-xs text-muted mt-1">Share this with the Admin after creation.</p>
                 </div>
               </div>
+            </Card>
+          </div>
 
-              <div className="flex gap-2 pt-1">
-                <Button type="submit" variant="primary" disabled={createMut.isPending}>
-                  {createMut.isPending ? "Creating…" : "Create Organisation & Admin"}
-                </Button>
-                <Button type="button" onClick={() => { setShowForm(false); setForm(EMPTY); }}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
+          <div className="flex gap-2">
+            <Button type="submit" variant="primary" disabled={createMut.isPending}>
+              <i className="ti ti-circle-check" />
+              {createMut.isPending ? "Creating…" : "Create Organisation & Admin"}
+            </Button>
+            <Button type="button" onClick={() => { setShowForm(false); setForm(EMPTY); }}>
+              Cancel
+            </Button>
+          </div>
+        </form>
       )}
 
       <Card>
@@ -201,6 +203,7 @@ export default function SuperAdminOrgs() {
                       className={`text-xs font-medium ${org.isActive ? "text-danger" : "text-success"}`}
                       onClick={() => setConfirmOrg(org)}
                       disabled={updateMut.isPending}
+                      aria-label={org.isActive ? `Disable ${org.name}` : `Enable ${org.name}`}
                     >
                       {org.isActive ? "Disable" : "Enable"}
                     </button>

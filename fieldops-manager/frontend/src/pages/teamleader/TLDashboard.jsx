@@ -69,7 +69,7 @@ export default function TLDashboard() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-2xl font-bold">Team Performance — {formatMonth(prefix)}</h1>
+        <h1 className="text-3xl font-bold">Team Performance — {formatMonth(prefix)}</h1>
         <p className="text-sm text-muted mt-0.5">Month-to-date metrics across all engineers</p>
       </div>
 

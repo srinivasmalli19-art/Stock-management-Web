@@ -14,7 +14,7 @@ const StatTile = ({ icon: Icon, label, value, color = "accent" }) => {
     amber: "bg-amber-50 text-amber-700 border-amber-200",
   };
   return (
-    <div className={`rounded-xl border p-4 transition-all duration-200 ${colors[color]}`}>
+    <div className={`rounded-xl border p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${colors[color]}`}>
       <div className="flex items-center gap-2 mb-2.5">
         <Icon size={16} />
         <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
@@ -47,7 +47,7 @@ export default function SuperAdminDashboard() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
           <Globe size={20} className="text-purple-600" />
           Global Overview
         </h1>
