@@ -3,8 +3,8 @@ import { useAuth } from "../../context/AuthContext";
 import { NAV_ITEMS } from "../../constants/navItems";
 import { ROLE_LABELS } from "../../constants/roles";
 
-export default function Sidebar({ isMobileOpen, onClose, onChangePassword }) {
-  const { currentUser, logout } = useAuth();
+export default function Sidebar({ isMobileOpen, onClose }) {
+  const { currentUser } = useAuth();
   const items = NAV_ITEMS[currentUser?.role] || [];
   const initials = currentUser?.name?.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "U";
 
@@ -72,33 +72,15 @@ export default function Sidebar({ isMobileOpen, onClose, onChangePassword }) {
         })}
       </nav>
 
-      {/* ── Bottom actions ────────────────────────────────────────────────────── */}
+      {/* ── User identity ─────────────────────────────────────────────────────── */}
       <div className="px-3 pb-4 border-t border-sidebar-border pt-3 shrink-0">
-        <button
-          onClick={() => { onClose(); onChangePassword(); }}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-sidebar-text hover:bg-gray-100 hover:text-text transition-all duration-150 w-full cursor-pointer"
-        >
-          <i className="ti ti-lock text-[18px] text-muted" />
-          Change Password
-        </button>
-        <button
-          onClick={logout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-sidebar-text hover:bg-red-50 hover:text-danger transition-all duration-150 w-full cursor-pointer"
-        >
-          <i className="ti ti-logout text-[18px] text-muted" />
-          Sign Out
-        </button>
-
-        {/* User identity */}
-        <div className="mt-2 pt-3 border-t border-sidebar-border">
-          <div className="flex items-center gap-3 px-2 py-1">
-            <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-[12px] font-bold shrink-0">
-              {initials}
-            </div>
-            <div className="min-w-0">
-              <div className="text-[12px] font-semibold text-text truncate leading-tight">{currentUser?.name}</div>
-              <div className="text-[10px] text-muted">{ROLE_LABELS[currentUser?.role] || currentUser?.role}</div>
-            </div>
+        <div className="flex items-center gap-3 px-2 py-1">
+          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-[12px] font-bold shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <div className="text-[12px] font-semibold text-text truncate leading-tight">{currentUser?.name}</div>
+            <div className="text-[10px] text-muted">{ROLE_LABELS[currentUser?.role] || currentUser?.role}</div>
           </div>
         </div>
       </div>

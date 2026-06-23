@@ -34,23 +34,21 @@ import SuperAdminMonitoring from "./pages/superadmin/SuperAdminMonitoring";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminApprovals from "./pages/admin/AdminApprovals";
+import AdminApprovalCenter from "./pages/admin/AdminApprovalCenter";
 import AdminPurchaseApprovals from "./pages/admin/AdminPurchaseApprovals";
 import AdminRevokeApprovals from "./pages/admin/AdminRevokeApprovals";
-import AdminAttendance from "./pages/admin/AdminAttendance";
+import AdminAttendanceManagement from "./pages/admin/AdminAttendanceManagement";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminPLReport from "./pages/admin/AdminPLReport";
 import AdminSkuRegistry from "./pages/admin/AdminSkuRegistry";
 import AdminUserRegistry from "./pages/admin/AdminUserRegistry";
 import AdminLPApprovals from "./pages/admin/AdminLPApprovals";
-import AdminAttendanceApproval from "./pages/admin/AdminAttendanceApproval";
-import AdminAttendanceLedger from "./pages/admin/AdminAttendanceLedger";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import Notifications from "./pages/common/Notifications";
 
 const ROOT_ROUTES = {
   Super_Admin: "/superadmin/dashboard",
-  Admin: "/admin/approvals",
+  Admin: "/admin/approval-center",
   Store_Manager: "/store/dashboard",
   Team_Leader: "/tl/approvals",
   Engineer: "/engineer/dashboard",
@@ -102,18 +100,22 @@ export default function App() {
 
             {/* Admin */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/approvals" element={<AdminApprovals />} />
+            <Route path="/admin/approval-center" element={<AdminApprovalCenter />} />
             <Route path="/admin/purchase-approvals" element={<AdminPurchaseApprovals />} />
             <Route path="/admin/revoke-approvals" element={<AdminRevokeApprovals />} />
             <Route path="/admin/lp-approvals" element={<AdminLPApprovals />} />
-            <Route path="/admin/attendance-approval" element={<AdminAttendanceApproval />} />
-            <Route path="/admin/attendance-ledger" element={<AdminAttendanceLedger />} />
-            <Route path="/admin/attendance" element={<AdminAttendance />} />
+            <Route path="/admin/attendance-management" element={<AdminAttendanceManagement />} />
             <Route path="/admin/inventory" element={<AdminInventory />} />
             <Route path="/admin/pl-report" element={<AdminPLReport />} />
             <Route path="/admin/skus" element={<AdminSkuRegistry />} />
             <Route path="/admin/users" element={<AdminUserRegistry />} />
             <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+
+            {/* Redirects for removed routes */}
+            <Route path="/admin/approvals" element={<Navigate to="/admin/approval-center" replace />} />
+            <Route path="/admin/attendance-approval" element={<Navigate to="/admin/approval-center" replace />} />
+            <Route path="/admin/attendance" element={<Navigate to="/admin/attendance-management" replace />} />
+            <Route path="/admin/attendance-ledger" element={<Navigate to="/admin/attendance-management" replace />} />
 
             {/* Notifications — accessible to all authenticated roles */}
             <Route path="/notifications" element={<Notifications />} />

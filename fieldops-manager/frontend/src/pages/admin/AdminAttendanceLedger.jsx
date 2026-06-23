@@ -14,7 +14,7 @@ const ATTENDANCE_COLOR = {
   Leave: "text-blue-600",
 };
 
-export default function AdminAttendanceLedger() {
+export default function AdminAttendanceLedger({ embedded = false }) {
   const today = todayStr();
   const [filters, setFilters] = useState({ from: "", to: "", status: "" });
 
@@ -55,10 +55,12 @@ export default function AdminAttendanceLedger() {
   return (
     <div>
       <div className="flex items-start justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-bold">Attendance Ledger</h1>
-          <p className="text-sm text-muted mt-0.5">Approved attendance records for TL and SM</p>
-        </div>
+        {!embedded && (
+          <div>
+            <h1 className="text-xl font-bold">Attendance Ledger</h1>
+            <p className="text-sm text-muted mt-0.5">Approved attendance records for TL and SM</p>
+          </div>
+        )}
         <Button size="sm" onClick={handleDownload} disabled={records.length === 0}>
           <i className="ti ti-download" /> Download CSV
         </Button>

@@ -19,7 +19,7 @@ const stepMonth = (prefix, delta) => {
   return next > current ? current : next;
 };
 
-export default function AdminAttendance() {
+export default function AdminAttendance({ embedded = false }) {
   const [prefix, setPrefix] = useState(getCurrentMonthPrefix);
   const { daysInMonth } = getMonthRange(prefix);
   const currentPrefix = getCurrentMonthPrefix();
@@ -94,14 +94,20 @@ export default function AdminAttendance() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <div>
-          <h1 className="text-4xl font-bold text-text">Consolidated Attendance Register</h1>
-          {summary.length > 0 && (
-            <p className="text-sm text-muted mt-0.5">
-              {formatMonth(prefix)} · Overall {overallPct}% attendance
-            </p>
-          )}
-        </div>
+        {!embedded ? (
+          <div>
+            <h1 className="text-4xl font-bold text-text">Consolidated Attendance Register</h1>
+            {summary.length > 0 && (
+              <p className="text-sm text-muted mt-0.5">
+                {formatMonth(prefix)} · Overall {overallPct}% attendance
+              </p>
+            )}
+          </div>
+        ) : (
+          <span className="text-sm font-semibold text-muted">
+            {summary.length > 0 ? `${formatMonth(prefix)} · Overall ${overallPct}% attendance` : formatMonth(prefix)}
+          </span>
+        )}
         <div className="flex items-center gap-2">
           <Button size="sm" variant="default" onClick={() => setPrefix(stepMonth(prefix, -1))}>
             <i className="ti ti-chevron-left" />
