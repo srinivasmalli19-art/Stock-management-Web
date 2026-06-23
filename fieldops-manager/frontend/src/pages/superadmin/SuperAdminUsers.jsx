@@ -51,7 +51,7 @@ export default function SuperAdminUsers() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+        <h1 className="text-4xl font-bold flex items-center gap-2">
           <Users size={20} />
           All Users
         </h1>

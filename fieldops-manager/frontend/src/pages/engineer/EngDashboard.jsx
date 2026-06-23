@@ -90,7 +90,7 @@ export default function EngDashboard() {
     <div>
       <div className="flex items-end justify-between mb-5">
         <div>
-          <h1 className="text-3xl font-bold text-text">Welcome, {firstName}</h1>
+          <h1 className="text-4xl font-bold text-text">Welcome, {firstName}</h1>
           <p className="text-sm text-muted mt-0.5">Month-to-date · {formatMonth(prefix)}</p>
         </div>
       </div>

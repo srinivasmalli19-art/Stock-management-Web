@@ -124,7 +124,7 @@ export default function AdminDashboard() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
         <p className="text-sm text-muted mt-0.5">{formatMonth(prefix)} — operations overview</p>
       </div>
 

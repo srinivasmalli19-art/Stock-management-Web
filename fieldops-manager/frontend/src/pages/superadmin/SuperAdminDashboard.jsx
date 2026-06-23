@@ -73,7 +73,7 @@ export default function SuperAdminDashboard() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+        <h1 className="text-4xl font-bold flex items-center gap-2">
           <Globe size={20} className="text-purple-600" />
           Global Overview
         </h1>

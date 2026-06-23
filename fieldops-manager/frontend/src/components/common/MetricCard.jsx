@@ -1,16 +1,17 @@
-const colors = {
-  accent: "border-l-accent",
-  green: "border-l-success",
-  amber: "border-l-warn",
-  red: "border-l-danger",
+const colorMap = {
+  accent: { ring: "ring-accent/15", val: "text-accent"   },
+  green:  { ring: "ring-success/15", val: "text-success"  },
+  amber:  { ring: "ring-warn/15",    val: "text-warn"     },
+  red:    { ring: "ring-danger/15",  val: "text-danger"   },
 };
 
 export default function MetricCard({ label, value, sub, color = "accent" }) {
+  const cfg = colorMap[color] || colorMap.accent;
   return (
-    <div className={`bg-white border border-border rounded-lg shadow-card p-4 border-l-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${colors[color] || colors.accent}`}>
-      <div className="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">{label}</div>
-      <div className="text-2xl font-bold text-text leading-tight">{value}</div>
-      {sub && <div className="text-xs text-muted mt-1">{sub}</div>}
+    <div className={`bg-white rounded-2xl shadow-card border border-border p-5 ring-1 ${cfg.ring} transition-all duration-200 hover:shadow-card-md hover:-translate-y-0.5`}>
+      <div className="text-[10px] font-bold text-muted uppercase tracking-[0.08em] mb-2.5">{label}</div>
+      <div className={`text-2xl font-bold leading-tight ${cfg.val}`}>{value}</div>
+      {sub && <div className="text-xs text-muted mt-1.5">{sub}</div>}
     </div>
   );
 }

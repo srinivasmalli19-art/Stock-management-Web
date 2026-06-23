@@ -6,43 +6,43 @@ import { ROLE_LABELS } from "../../constants/roles";
 export default function Sidebar({ isMobileOpen, onClose, onChangePassword }) {
   const { currentUser, logout } = useAuth();
   const items = NAV_ITEMS[currentUser?.role] || [];
+  const initials = currentUser?.name?.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "U";
 
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-30 w-[220px] bg-sidebar flex flex-col h-screen overflow-y-auto
-        transition-transform duration-300 ease-in-out
-        md:relative md:translate-x-0 md:z-auto md:shrink-0
+        fixed inset-y-0 left-0 z-30 w-[248px] bg-sidebar flex flex-col h-screen
+        border-r border-sidebar-border shadow-sidebar overflow-hidden
+        transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+        md:relative md:translate-x-0 md:z-auto md:shrink-0 md:shadow-none
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
       `}
     >
-      <div className="px-4 pt-5 pb-3 border-b border-white/10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-white font-bold text-base">
-            <i className="ti ti-bolt text-sidebar-active text-xl" />
-            FieldOps
+      {/* ── Brand header ─────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-sidebar-border shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-accent rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+            <i className="ti ti-tool text-white text-[18px]" />
           </div>
-          <button
-            onClick={onClose}
-            className="md:hidden p-1 text-sidebar-text hover:text-white transition-colors cursor-pointer"
-            aria-label="Close menu"
-          >
-            <i className="ti ti-x text-lg" />
-          </button>
+          <span className="text-[17px] font-bold text-text tracking-tight">LogiTask</span>
         </div>
-        <div className="text-sidebar-text text-xs mt-2">{currentUser?.name}</div>
-        <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 uppercase tracking-wide">
-          {ROLE_LABELS[currentUser?.role] || currentUser?.role}
-        </span>
+        <button
+          onClick={onClose}
+          className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-text hover:bg-gray-100 transition-colors cursor-pointer"
+          aria-label="Close menu"
+        >
+          <i className="ti ti-x text-lg" />
+        </button>
       </div>
 
-      <nav className="flex-1 py-3">
+      {/* ── Navigation ───────────────────────────────────────────────────────── */}
+      <nav className="flex-1 py-3 px-3 space-y-0.5 overflow-y-auto">
         {items.map((item, idx) => {
           if (item.section) {
             return (
               <div
-                key={idx}
-                className="px-4 pt-3 pb-1 text-[10px] font-semibold text-sidebar-text/50 uppercase tracking-widest"
+                key={`section-${idx}`}
+                className="px-3 pt-5 pb-1.5 text-[10px] font-bold text-muted/60 uppercase tracking-[0.1em] first:pt-2"
               >
                 {item.section}
               </div>
@@ -54,35 +54,53 @@ export default function Sidebar({ isMobileOpen, onClose, onChangePassword }) {
               to={item.page}
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-4 py-2.5 text-[13px] transition-all duration-150 border-l-[3px] ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 group ${
                   isActive
-                    ? "bg-blue-500/15 text-blue-300 border-sidebar-active"
-                    : "text-sidebar-text hover:bg-white/5 hover:text-slate-200 border-transparent"
+                    ? "bg-accent2 text-accent font-semibold"
+                    : "text-sidebar-text hover:bg-gray-100 hover:text-text"
                 }`
               }
             >
-              <i className={`ti ${item.icon} text-[17px]`} />
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  <i className={`ti ${item.icon} text-[18px] transition-colors ${isActive ? "text-accent" : "text-muted group-hover:text-text"}`} />
+                  {item.label}
+                </>
+              )}
             </NavLink>
           );
         })}
       </nav>
 
-      <div className="px-4 py-3 border-t border-white/10 space-y-1">
+      {/* ── Bottom actions ────────────────────────────────────────────────────── */}
+      <div className="px-3 pb-4 border-t border-sidebar-border pt-3 shrink-0">
         <button
           onClick={() => { onClose(); onChangePassword(); }}
-          className="flex items-center gap-2.5 text-sidebar-text hover:text-white text-[13px] transition-colors w-full cursor-pointer"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-sidebar-text hover:bg-gray-100 hover:text-text transition-all duration-150 w-full cursor-pointer"
         >
-          <i className="ti ti-key text-[17px]" />
+          <i className="ti ti-lock text-[18px] text-muted" />
           Change Password
         </button>
         <button
           onClick={logout}
-          className="flex items-center gap-2.5 text-sidebar-text hover:text-white text-[13px] transition-colors w-full cursor-pointer"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-sidebar-text hover:bg-red-50 hover:text-danger transition-all duration-150 w-full cursor-pointer"
         >
-          <i className="ti ti-logout text-[17px]" />
+          <i className="ti ti-logout text-[18px] text-muted" />
           Sign Out
         </button>
+
+        {/* User identity */}
+        <div className="mt-2 pt-3 border-t border-sidebar-border">
+          <div className="flex items-center gap-3 px-2 py-1">
+            <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-[12px] font-bold shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[12px] font-semibold text-text truncate leading-tight">{currentUser?.name}</div>
+              <div className="text-[10px] text-muted">{ROLE_LABELS[currentUser?.role] || currentUser?.role}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
   );

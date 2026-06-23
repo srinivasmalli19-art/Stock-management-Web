@@ -1,7 +1,7 @@
 export default function Card({ children, className = "", padding = true }) {
   return (
     <div
-      className={`bg-white border border-border rounded-lg shadow-card ${padding ? "p-5" : ""} ${className}`}
+      className={`bg-white rounded-2xl shadow-card border border-border ${padding ? "p-5 sm:p-6" : ""} ${className}`}
     >
       {children}
     </div>
@@ -11,7 +11,7 @@ export default function Card({ children, className = "", padding = true }) {
 export function CardTitle({ children, right }) {
   return (
     <div className="flex items-center justify-between mb-4">
-      <h3 className="text-lg font-semibold text-text">{children}</h3>
+      <h3 className="text-xl font-semibold text-text">{children}</h3>
       {right && <span className="text-xs text-muted">{right}</span>}
     </div>
   );

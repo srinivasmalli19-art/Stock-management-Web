@@ -10,7 +10,7 @@ const PAGE_TITLES = {
   "/admin/purchase-approvals": "Purchase Inward Approvals",
   "/admin/revoke-approvals": "Stock Revoke Approvals",
   "/admin/attendance": "Attendance Register",
-  "/admin/inventory": "Main Store Inventory",
+  "/admin/inventory": "Store Inventory",
   "/admin/pl-report": "Monthly P&L Report",
   "/admin/skus": "SKU Registry",
   "/admin/users": "User Registry",
@@ -29,6 +29,7 @@ const PAGE_TITLES = {
   "/admin/lp-approvals": "LP & Claim Approvals",
   "/admin/audit-logs": "Audit Logs",
   "/superadmin/audit-logs": "Global Audit Logs",
+  "/superadmin/monitoring": "Platform Monitoring",
   "/engineer/dashboard": "My Dashboard",
   "/engineer/productivity": "Log Productivity",
   "/engineer/status": "Approval Status",
@@ -38,39 +39,33 @@ const PAGE_TITLES = {
 
 export default function Topbar({ onMenuClick }) {
   const { pathname } = useLocation();
-  const title = PAGE_TITLES[pathname] || "FieldOps";
+  const title = PAGE_TITLES[pathname] || "LogiTask";
   const now = new Date();
 
-  const dateStrFull = now.toLocaleDateString("en-IN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-  const dateStrShort = now.toLocaleDateString("en-IN", {
+  const dateStr = now.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
-    year: "numeric",
   });
 
   return (
-    <header className="bg-white border-b border-border px-4 md:px-6 h-14 flex items-center justify-between flex-shrink-0">
-      <div className="flex items-center gap-3">
+    <header className="bg-white border-b border-border px-4 md:px-6 h-14 flex items-center justify-between shrink-0">
+      <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onMenuClick}
-          className="md:hidden p-1.5 rounded text-muted hover:text-text hover:bg-gray-100 transition-colors cursor-pointer"
+          className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
           aria-label="Open menu"
         >
           <i className="ti ti-menu-2 text-xl" />
         </button>
-        <h1 className="text-base font-semibold text-text">{title}</h1>
+        <h1 className="text-[15px] font-semibold text-text truncate">{title}</h1>
       </div>
-      <div className="flex items-center gap-2">
+
+      <div className="flex items-center gap-1.5 shrink-0">
         <NotificationBell />
-        <span className="text-xs text-muted">
-          <span className="hidden md:inline">{dateStrFull}</span>
-          <span className="md:hidden">{dateStrShort}</span>
-        </span>
+        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 border border-border text-xs font-medium text-muted">
+          <i className="ti ti-calendar text-[13px]" />
+          {dateStr}
+        </div>
       </div>
     </header>
   );
