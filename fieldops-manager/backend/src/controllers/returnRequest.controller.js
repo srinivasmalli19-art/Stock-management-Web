@@ -17,7 +17,7 @@ const getReturnRequests = asyncHandler(async (req, res) => {
     where,
     include: {
       engineer: { select: { id: true, name: true, email: true } },
-      sku: { select: { id: true, name: true } },
+      sku: { select: { id: true, code: true, name: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -74,29 +74,61 @@ const approveReturnRequest = asyncHandler(async (req, res) => {
   if (req.user.role !== "Super_Admin" && request.orgId !== req.user.orgId) return error(res, "Request not found", 404);
   if (request.status !== "Pending") return error(res, "Only Pending return requests can be approved", 400);
 
-  await prisma.$transaction(async (tx) => {
-    // Remove qty from engineer's van stock
-    const stock = await tx.engineerStock.findUnique({
-      where: { engineerId_skuId: { engineerId: request.engineerId, skuId: request.skuId } },
-    });
-    if (stock) {
-      await tx.engineerStock.update({
-        where: { engineerId_skuId: { engineerId: request.engineerId, skuId: request.skuId } },
-        data: { qty: Math.max(0, stock.qty - request.qty) },
-      });
-    }
-
-    // Add qty back to main inventory
-    const mainInv = await tx.mainInventory.findUnique({ where: { skuId: request.skuId } });
-    if (mainInv) {
-      await tx.mainInventory.update({
-        where: { skuId: request.skuId },
-        data: { qty: mainInv.qty + request.qty },
-      });
-    }
-
-    await tx.returnRequest.update({ where: { id }, data: { status: "Approved" } });
+  const stockCheck = await prisma.engineerStock.findUnique({
+    where: { engineerId_skuId: { engineerId: request.engineerId, skuId: request.skuId } },
   });
+  if (!stockCheck || stockCheck.qty < request.qty) {
+    await writeAudit({
+      req,
+      action: "RETURN_REQUEST_APPROVAL_BLOCKED_INSUFFICIENT_STOCK",
+      entityType: "ReturnRequest",
+      entityId: id,
+      oldValue: { skuId: request.skuId, requiredQty: request.qty, availableQty: stockCheck?.qty ?? 0 },
+    });
+    return error(
+      res,
+      `Cannot approve: engineer has only ${stockCheck?.qty ?? 0} unit(s) on hand, but the return requests ${request.qty}. Reconcile stock before approving.`,
+      400
+    );
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const claimed = await tx.returnRequest.updateMany({
+        where: { id, status: "Pending" },
+        data: { status: "Approved" },
+      });
+      if (claimed.count === 0) {
+        throw Object.assign(new Error("Return request was already processed by another request"), { statusCode: 409 });
+      }
+
+      // Remove qty from engineer's van stock — conditional decrement guards
+      // against a concurrent transaction depleting the same stock first.
+      const deducted = await tx.engineerStock.updateMany({
+        where: { engineerId: request.engineerId, skuId: request.skuId, qty: { gte: request.qty } },
+        data: { qty: { decrement: request.qty } },
+      });
+      if (deducted.count === 0) {
+        throw Object.assign(new Error("Insufficient van stock — a concurrent transaction already consumed it"), { statusCode: 409 });
+      }
+
+      // Add qty back to main inventory
+      const mainInv = await tx.mainInventory.findUnique({ where: { skuId: request.skuId } });
+      if (mainInv) {
+        await tx.mainInventory.update({
+          where: { skuId: request.skuId },
+          data: { qty: { increment: request.qty } },
+        });
+      } else {
+        await tx.mainInventory.create({
+          data: { skuId: request.skuId, qty: request.qty, unitPrice: 0, orgId: request.orgId },
+        });
+      }
+    });
+  } catch (err) {
+    if (err.statusCode === 409) return error(res, err.message, 409);
+    throw err;
+  }
 
   await writeAudit({ req, action: "RETURN_REQUEST_APPROVED", entityType: "ReturnRequest", entityId: id, oldValue: { status: "Pending" }, newValue: { status: "Approved", qty: request.qty, skuName: request.sku.name } });
 

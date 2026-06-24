@@ -207,7 +207,7 @@ const storeDashboard = asyncHandler(async (req, res) => {
       where: orgWhere,
       orderBy: { createdAt: "desc" },
       take: 6,
-      include: { sku: { select: { id: true, name: true } } },
+      include: { sku: { select: { id: true, code: true, name: true } } },
     }),
   ]);
 

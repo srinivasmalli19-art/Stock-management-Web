@@ -11,11 +11,12 @@ const getAllSkus = asyncHandler(async (req, res) => {
   const skus = await prisma.sku.findMany({
     where,
     include: { mainInventory: true },
-    orderBy: { id: "asc" },
+    orderBy: { code: "asc" },
   });
 
   const result = skus.map((s) => ({
     id: s.id,
+    code: s.code,
     name: s.name,
     lowStockAlert: s.lowStockAlert,
     qty: s.mainInventory?.qty ?? 0,
@@ -28,21 +29,22 @@ const getAllSkus = asyncHandler(async (req, res) => {
 });
 
 const createSku = asyncHandler(async (req, res) => {
-  const { id, name, lowStockAlert = 0 } = req.body;
-  const skuId = id.toUpperCase();
+  const { code, name, lowStockAlert = 0 } = req.body;
+  const skuCode = code.toUpperCase();
   const orgId = req.user.orgId;
 
-  const existing = await prisma.sku.findUnique({ where: { id: skuId } });
-  if (existing) return error(res, "SKU ID already exists", 409);
+  // Codes are unique per-organisation, not globally — two orgs may both use "SKU-001".
+  const existing = await prisma.sku.findUnique({ where: { code_orgId: { code: skuCode, orgId } } });
+  if (existing) return error(res, "SKU code already exists in your organisation", 409);
 
   const sku = await prisma.$transaction(async (tx) => {
-    const s = await tx.sku.create({ data: { id: skuId, name, lowStockAlert, orgId } });
+    const s = await tx.sku.create({ data: { code: skuCode, name, lowStockAlert, orgId } });
     await tx.mainInventory.create({ data: { skuId: s.id, qty: 0, unitPrice: 0, orgId } });
     return s;
   });
 
   const action = req.user.role === "Store_Manager" ? "SKU_CREATED_BY_STORE_MANAGER" : "SKU_CREATED";
-  await writeAudit({ req, action, entityType: "Sku", entityId: sku.id, newValue: { id: skuId, name, lowStockAlert } });
+  await writeAudit({ req, action, entityType: "Sku", entityId: sku.id, newValue: { code: skuCode, name, lowStockAlert } });
 
   // Notify admins when SM creates a SKU
   if (req.user.role === "Store_Manager") {
@@ -51,7 +53,7 @@ const createSku = asyncHandler(async (req, res) => {
       userIds: adminIds,
       orgId,
       title: "New SKU Created",
-      message: `Store Manager ${req.user.name} registered SKU ${skuId} (${name}).`,
+      message: `Store Manager ${req.user.name} registered SKU ${skuCode} (${name}).`,
       type: "info",
       entityType: "Sku",
       entityId: sku.id,

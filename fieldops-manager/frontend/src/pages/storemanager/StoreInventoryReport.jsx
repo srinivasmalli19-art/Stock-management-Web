@@ -84,7 +84,7 @@ export default function StoreInventoryReport() {
                 <tbody>
                   {inventory.map((i) => (
                     <tr key={i.skuId}>
-                      <td><SkuTag id={i.skuId} /></td>
+                      <td><SkuTag id={i.skuCode} /></td>
                       <td>{i.skuName}</td>
                       <td>
                         <strong>{i.qty}</strong>

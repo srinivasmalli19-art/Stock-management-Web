@@ -18,9 +18,7 @@ router.use(authenticate);
 router.use(requireOrg);
 
 const submitSchema = Joi.object({
-  date: Joi.string()
-    .pattern(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
+  date: Joi.date().iso().max("now").optional(),
   attendanceStatus: Joi.string()
     .valid("Present", "Absent", "Half_Day", "Leave")
     .required(),

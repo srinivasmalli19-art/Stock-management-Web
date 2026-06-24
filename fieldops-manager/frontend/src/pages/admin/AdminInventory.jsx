@@ -91,7 +91,7 @@ export default function AdminInventory() {
               <tbody>
                 {inventory.map((i) => (
                   <tr key={i.skuId}>
-                    <td><SkuTag id={i.skuId} /></td>
+                    <td><SkuTag id={i.skuCode} /></td>
                     <td>{i.skuName}</td>
                     <td>
                       <strong>{i.qty}</strong>
@@ -149,7 +149,7 @@ export default function AdminInventory() {
                   stock.map((s) => (
                     <tr key={`${engineer.id}-${s.skuId}`}>
                       <td>{engineer.name}</td>
-                      <td><SkuTag id={s.skuId} /></td>
+                      <td><SkuTag id={s.sku?.code} /></td>
                       <td>{s.sku?.name}</td>
                       <td>{s.qty}</td>
                     </tr>

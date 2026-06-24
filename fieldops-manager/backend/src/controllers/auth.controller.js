@@ -19,11 +19,15 @@ const COOKIE_OPTIONS = {
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() }, include: { org: true } });
   if (!user || !user.isActive) return error(res, "Invalid credentials", 401);
 
   const valid = await comparePassword(password, user.passwordHash);
   if (!valid) return error(res, "Invalid credentials", 401);
+
+  if (user.orgId && !user.org?.isActive) {
+    return error(res, "Your organisation has been deactivated. Contact your Super Admin.", 403);
+  }
 
   const payload = { id: user.id, email: user.email, role: user.role, name: user.name, orgId: user.orgId ?? null };
   const accessToken = generateAccessToken(payload);
@@ -66,8 +70,11 @@ const refresh = asyncHandler(async (req, res) => {
     return error(res, "Refresh token revoked or expired", 401);
   }
 
-  const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+  const user = await prisma.user.findUnique({ where: { id: decoded.id }, include: { org: true } });
   if (!user || !user.isActive) return error(res, "User not found or inactive", 401);
+  if (user.orgId && !user.org?.isActive) {
+    return error(res, "Your organisation has been deactivated. Contact your Super Admin.", 403);
+  }
 
   // Rotate refresh token
   await prisma.refreshToken.update({ where: { token }, data: { isRevoked: true } });

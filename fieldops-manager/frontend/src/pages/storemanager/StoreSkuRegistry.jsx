@@ -11,7 +11,7 @@ import { PageSpinner } from "../../components/common/Spinner";
 
 export default function StoreSkuRegistry() {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ id: "", name: "", lowStockAlert: "" });
+  const [form, setForm] = useState({ code: "", name: "", lowStockAlert: "" });
 
   const { data: skusRes, isLoading } = useQuery({
     queryKey: ["skus"],
@@ -23,14 +23,14 @@ export default function StoreSkuRegistry() {
     onSuccess: () => {
       toast.success("SKU registered! Admin has been notified.");
       queryClient.invalidateQueries({ queryKey: ["skus"] });
-      setForm({ id: "", name: "", lowStockAlert: "" });
+      setForm({ code: "", name: "", lowStockAlert: "" });
     },
     onError: (err) => toast.error(err?.response?.data?.message || "Failed to register SKU"),
   });
 
   const handleCreate = () => {
-    if (!form.id || !form.name) { toast.error("Enter SKU ID and name"); return; }
-    createMutation.mutate({ id: form.id, name: form.name, lowStockAlert: parseInt(form.lowStockAlert) || 0 });
+    if (!form.code || !form.name) { toast.error("Enter SKU ID and name"); return; }
+    createMutation.mutate({ code: form.code, name: form.name, lowStockAlert: parseInt(form.lowStockAlert) || 0 });
   };
 
   if (isLoading) return <PageSpinner />;
@@ -50,8 +50,8 @@ export default function StoreSkuRegistry() {
             <input
               type="text"
               className={inputClass}
-              value={form.id}
-              onChange={(e) => setForm({ ...form, id: e.target.value.toUpperCase() })}
+              value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
               placeholder="e.g. SKU-009"
             />
           </FormField>
@@ -90,7 +90,7 @@ export default function StoreSkuRegistry() {
               <tbody>
                 {skus.map((s) => (
                   <tr key={s.id}>
-                    <td><SkuTag id={s.id} /></td>
+                    <td><SkuTag id={s.code} /></td>
                     <td>{s.name}</td>
                     <td>{s.lowStockAlert}</td>
                     <td><strong>{s.qty}</strong></td>

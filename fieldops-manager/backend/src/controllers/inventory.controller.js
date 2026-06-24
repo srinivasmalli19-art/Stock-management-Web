@@ -9,12 +9,13 @@ const getMainInventory = asyncHandler(async (req, res) => {
 
   const items = await prisma.mainInventory.findMany({
     where,
-    include: { sku: { select: { id: true, name: true, lowStockAlert: true } } },
-    orderBy: { skuId: "asc" },
+    include: { sku: { select: { id: true, code: true, name: true, lowStockAlert: true } } },
+    orderBy: { sku: { code: "asc" } },
   });
 
   const result = items.map((item) => ({
     skuId: item.skuId,
+    skuCode: item.sku.code,
     skuName: item.sku.name,
     qty: item.qty,
     unitPrice: item.unitPrice,
@@ -38,8 +39,8 @@ const getEngineerStock = asyncHandler(async (req, res) => {
 
   const stock = await prisma.engineerStock.findMany({
     where: { engineerId: id },
-    include: { sku: { select: { id: true, name: true } } },
-    orderBy: { skuId: "asc" },
+    include: { sku: { select: { id: true, code: true, name: true } } },
+    orderBy: { sku: { code: "asc" } },
   });
 
   return success(res, stock);
@@ -48,8 +49,8 @@ const getEngineerStock = asyncHandler(async (req, res) => {
 const getMyStock = asyncHandler(async (req, res) => {
   const stock = await prisma.engineerStock.findMany({
     where: { engineerId: req.user.id },
-    include: { sku: { select: { id: true, name: true } } },
-    orderBy: { skuId: "asc" },
+    include: { sku: { select: { id: true, code: true, name: true } } },
+    orderBy: { sku: { code: "asc" } },
   });
 
   return success(res, stock);
@@ -61,12 +62,12 @@ const downloadInventoryCsv = asyncHandler(async (req, res) => {
 
   const items = await prisma.mainInventory.findMany({
     where,
-    include: { sku: { select: { id: true, name: true, lowStockAlert: true } } },
-    orderBy: { skuId: "asc" },
+    include: { sku: { select: { id: true, code: true, name: true, lowStockAlert: true } } },
+    orderBy: { sku: { code: "asc" } },
   });
 
   const rows = items.map((item) => ({
-    "SKU ID": item.skuId,
+    "SKU ID": item.sku.code,
     "Item Name": item.sku.name,
     "Available Qty": item.qty,
     "Unit Price": item.unitPrice,

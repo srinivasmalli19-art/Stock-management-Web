@@ -106,7 +106,7 @@ export default function StoreReturnRequests() {
                   {displayed.map((r) => (
                     <tr key={r.id}>
                       <td><strong>{r.engineer?.name}</strong></td>
-                      <td><SkuTag id={r.skuId} /></td>
+                      <td><SkuTag id={r.sku?.code} /></td>
                       <td>{r.sku?.name}</td>
                       <td>{r.qty}</td>
                       <td>{formatDate(r.createdAt)}</td>
@@ -139,7 +139,7 @@ export default function StoreReturnRequests() {
                     <Badge status={r.status} />
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-2">
-                    <div><span className="text-muted text-xs">SKU</span><div><SkuTag id={r.skuId} /></div></div>
+                    <div><span className="text-muted text-xs">SKU</span><div><SkuTag id={r.sku?.code} /></div></div>
                     <div><span className="text-muted text-xs">Qty</span><div><strong>{r.qty}</strong></div></div>
                     <div><span className="text-muted text-xs">Item</span><div>{r.sku?.name}</div></div>
                     <div><span className="text-muted text-xs">Date</span><div>{formatDate(r.createdAt)}</div></div>

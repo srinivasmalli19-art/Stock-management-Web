@@ -35,7 +35,7 @@ const getLogs = asyncHandler(async (req, res) => {
     where,
     include: {
       engineer: { select: { id: true, name: true, email: true } },
-      items: { include: { sku: { select: { id: true, name: true } } } },
+      items: { include: { sku: { select: { id: true, code: true, name: true } } } },
     },
     orderBy: { date: "desc" },
   });
@@ -208,43 +208,74 @@ const approveLog = asyncHandler(async (req, res) => {
   if (req.user.role !== "Super_Admin" && log.orgId !== req.user.orgId) return error(res, "Log not found", 404);
   if (log.status !== "Validated") return error(res, "Only Validated logs can be approved", 400);
 
-  await prisma.$transaction(async (tx) => {
-    for (const itemUpdate of items) {
-      await tx.productivityItem.update({
-        where: { id: itemUpdate.id },
-        data: { adminIncentive: itemUpdate.adminIncentive ?? 0 },
+  // Pre-check for a clear, user-facing error in the common (non-concurrent) case.
+  for (const item of log.items) {
+    const existing = await prisma.engineerStock.findUnique({
+      where: { engineerId_skuId: { engineerId: log.engineerId, skuId: item.skuId } },
+    });
+    if (!existing || existing.qty < item.qty) {
+      await writeAudit({
+        req,
+        action: "PRODUCTIVITY_APPROVAL_BLOCKED_INSUFFICIENT_STOCK",
+        entityType: "Productivity",
+        entityId: id,
+        oldValue: { skuId: item.skuId, requiredQty: item.qty, availableQty: existing?.qty ?? 0 },
       });
+      return error(
+        res,
+        `Cannot approve: engineer has only ${existing?.qty ?? 0} unit(s) of this accessory in van stock, but ${item.qty} were logged. Reconcile stock before approving.`,
+        400
+      );
     }
+  }
 
-    await tx.productivityLog.update({
-      where: { id },
-      data: { status: "Approved", adminNote: adminNote || "" },
-    });
-
-    await tx.attendance.upsert({
-      where: { engineerId_date: { engineerId: log.engineerId, date: log.date } },
-      update: { status: "Present" },
-      create: {
-        engineerId: log.engineerId,
-        date: log.date,
-        status: "Present",
-        productivityLogId: log.id,
-        orgId: log.orgId,
-      },
-    });
-
-    for (const item of log.items) {
-      const existing = await tx.engineerStock.findUnique({
-        where: { engineerId_skuId: { engineerId: log.engineerId, skuId: item.skuId } },
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Atomic status guard: only one concurrent approval call can win this update.
+      const claimed = await tx.productivityLog.updateMany({
+        where: { id, status: "Validated" },
+        data: { status: "Approved", adminNote: adminNote || "" },
       });
-      if (existing) {
-        await tx.engineerStock.update({
-          where: { engineerId_skuId: { engineerId: log.engineerId, skuId: item.skuId } },
-          data: { qty: Math.max(0, existing.qty - item.qty) },
+      if (claimed.count === 0) {
+        throw Object.assign(new Error("Log was already processed by another request"), { statusCode: 409 });
+      }
+
+      for (const itemUpdate of items) {
+        await tx.productivityItem.update({
+          where: { id: itemUpdate.id },
+          data: { adminIncentive: itemUpdate.adminIncentive ?? 0 },
         });
       }
-    }
-  });
+
+      await tx.attendance.upsert({
+        where: { engineerId_date: { engineerId: log.engineerId, date: log.date } },
+        update: { status: "Present" },
+        create: {
+          engineerId: log.engineerId,
+          date: log.date,
+          status: "Present",
+          productivityLogId: log.id,
+          orgId: log.orgId,
+        },
+      });
+
+      for (const item of log.items) {
+        // Conditional decrement: only succeeds if stock is still sufficient at
+        // the moment of the write, guarding against a concurrent deduction
+        // (e.g. a return/revoke approved in parallel) racing past the pre-check.
+        const deducted = await tx.engineerStock.updateMany({
+          where: { engineerId: log.engineerId, skuId: item.skuId, qty: { gte: item.qty } },
+          data: { qty: { decrement: item.qty } },
+        });
+        if (deducted.count === 0) {
+          throw Object.assign(new Error("Insufficient van stock — a concurrent transaction already consumed it"), { statusCode: 409 });
+        }
+      }
+    });
+  } catch (err) {
+    if (err.statusCode === 409) return error(res, err.message, 409);
+    throw err;
+  }
 
   const totalIncentive = items.reduce((s, i) => s + (i.adminIncentive || 0), 0);
   await writeAudit({ req, action: "PRODUCTIVITY_APPROVED", entityType: "Productivity", entityId: id, oldValue: { status: "Validated" }, newValue: { status: "Approved", engineerId: log.engineerId, orgId: log.orgId, totalIncentive, adminNote: adminNote || "" } });

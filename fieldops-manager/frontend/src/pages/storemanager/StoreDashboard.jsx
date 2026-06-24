@@ -131,7 +131,7 @@ export default function StoreDashboard() {
                 recentPurchase.map((p) => (
                   <tr key={p.id}>
                     <td>{formatDate(p.date)}</td>
-                    <td><SkuTag id={p.skuId} /></td>
+                    <td><SkuTag id={p.sku?.code} /></td>
                     <td>{p.sku?.name}</td>
                     <td>+{p.qty}</td>
                     <td>{p.vendor}</td>

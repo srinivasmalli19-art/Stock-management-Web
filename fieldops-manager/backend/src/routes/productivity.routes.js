@@ -11,7 +11,7 @@ router.use(authenticate);
 router.use(requireOrg);
 
 const createSchema = Joi.object({
-  date: Joi.string().isoDate().required(),
+  date: Joi.date().iso().max("now").required(),
   callsClosed: Joi.number().integer().min(0).max(30).optional(),
   rcpGenerated: Joi.number().integer().min(0).optional(),
   items: Joi.array().items(

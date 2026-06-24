@@ -98,6 +98,7 @@ model User {
   staffAttendance  StaffAttendance[]
   refreshTokens    RefreshToken[]
   notifications    Notification[]
+  purchaseInwards  PurchaseInward[]
 
   @@index([orgId])
   @@index([orgId, role])
@@ -107,7 +108,10 @@ model User {
 // ─── SKUs & Inventory ─────────────────────────────────────────────────────────
 
 model Sku {
-  id            String  @id
+  id            String  @id @default(cuid())
+  // Human-entered SKU code (e.g. "PART-001"). Unique per organisation, not globally —
+  // two orgs may both register the same code. The internal cuid `id` is the join key.
+  code          String
   name          String
   lowStockAlert Int     @default(0)
   orgId         String
@@ -122,6 +126,7 @@ model Sku {
   returnRequests    ReturnRequest[]
   purchaseInward    PurchaseInward[]
 
+  @@unique([code, orgId])
   @@index([orgId])
 }
 
@@ -272,22 +277,31 @@ model ReturnRequest {
 // ─── Purchase Inward ──────────────────────────────────────────────────────────
 
 model PurchaseInward {
-  id        String         @id @default(cuid())
-  skuId     String
-  sku       Sku            @relation(fields: [skuId], references: [id])
-  qty       Int
-  unitPrice Float
-  vendor    String
-  invoiceNo String
-  date      DateTime       @db.Date
-  status    PurchaseStatus @default(Pending)
-  orgId     String
-  org       Organisation   @relation(fields: [orgId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String         @id @default(cuid())
+  skuId       String
+  sku         Sku            @relation(fields: [skuId], references: [id])
+  qty         Int
+  unitPrice   Float
+  vendor      String
+  // Nullable rather than a placeholder string so that NULLs are exempt from
+  // the (orgId, vendor, invoiceNo) duplicate-delivery guard below — entries
+  // genuinely submitted without an invoice number must not collide with each
+  // other.
+  invoiceNo   String?
+  date        DateTime       @db.Date
+  status      PurchaseStatus @default(Pending)
+  orgId       String
+  org         Organisation   @relation(fields: [orgId], references: [id])
+  createdById String?
+  createdBy   User?          @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([orgId])
   @@index([orgId, status])
+  // Duplicate-delivery guard: the same vendor cannot submit the same invoice
+  // number twice within an organisation.
+  @@unique([orgId, vendor, invoiceNo])
 }
 
 // ─── LP & Claim Requests ──────────────────────────────────────────────────────

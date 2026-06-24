@@ -17,7 +17,7 @@ const getRequests = asyncHandler(async (req, res) => {
     where,
     include: {
       engineer: { select: { id: true, name: true, email: true } },
-      sku: { select: { id: true, name: true } },
+      sku: { select: { id: true, code: true, name: true } },
       revokeRequest: true,
     },
     orderBy: { createdAt: "desc" },

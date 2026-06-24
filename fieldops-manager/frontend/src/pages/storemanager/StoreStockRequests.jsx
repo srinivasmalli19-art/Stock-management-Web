@@ -137,7 +137,7 @@ export default function StoreStockRequests() {
                     <tr key={r.id}>
                       <td className="text-xs text-muted">{r.id.slice(0, 12)}…</td>
                       <td>{r.engineer?.name}</td>
-                      <td><SkuTag id={r.skuId} /></td>
+                      <td><SkuTag id={r.sku?.code} /></td>
                       <td>{r.sku?.name}</td>
                       <td>{r.qty}</td>
                       <td>{formatDate(r.createdAt)}</td>

@@ -200,7 +200,7 @@ export default function EngProductivity() {
               <div>
                 <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1">SKU</label>
                 <select className={selectClass} value={line.skuId} onChange={(e) => updateLine(line.id, "skuId", e.target.value)}>
-                  {skus.map((s) => <option key={s.id} value={s.id}>{s.id} – {s.name}</option>)}
+                  {skus.map((s) => <option key={s.id} value={s.id}>{s.code} – {s.name}</option>)}
                 </select>
               </div>
               <div>
@@ -358,7 +358,7 @@ export default function EngProductivity() {
         {rsItems.map((line) => (
           <div key={line.id} className="line-item-row mb-2">
             <select className={selectClass} value={line.skuId} onChange={(e) => updateRsLine(line.id, "skuId", e.target.value)}>
-              {skus.map((s) => <option key={s.id} value={s.id}>{s.id} – {s.name}</option>)}
+              {skus.map((s) => <option key={s.id} value={s.id}>{s.code} – {s.name}</option>)}
             </select>
             <input type="number" className={inputClass} placeholder="Qty" min={1} value={line.qty} onChange={(e) => updateRsLine(line.id, "qty", e.target.value)} />
             <input type="number" className={inputClass} placeholder="₹ Value" min={0} value={line.saleValue} onChange={(e) => updateRsLine(line.id, "saleValue", e.target.value)} />

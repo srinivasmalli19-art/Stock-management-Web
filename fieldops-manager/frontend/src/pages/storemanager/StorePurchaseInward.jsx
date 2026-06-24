@@ -84,7 +84,7 @@ export default function StorePurchaseInward() {
           </Alert>
           <FormField label="SKU Item">
             <select className={selectClass} value={form.skuId} onChange={(e) => update("skuId", e.target.value)}>
-              {skus.map((s) => <option key={s.id} value={s.id}>{s.id} – {s.name}</option>)}
+              {skus.map((s) => <option key={s.id} value={s.id}>{s.code} – {s.name}</option>)}
             </select>
           </FormField>
           <div className="grid grid-cols-2 gap-3">
@@ -120,7 +120,7 @@ export default function StorePurchaseInward() {
               <tbody>
                 {inventory.map((i) => (
                   <tr key={i.skuId}>
-                    <td><SkuTag id={i.skuId} /></td>
+                    <td><SkuTag id={i.skuCode} /></td>
                     <td>{i.skuName}</td>
                     <td>
                       {i.isLowStock
@@ -147,12 +147,12 @@ export default function StorePurchaseInward() {
                 <tr key={p.id}>
                   <td className="text-xs text-muted">{p.id.slice(0, 12)}…</td>
                   <td>{formatDate(p.date)}</td>
-                  <td><SkuTag id={p.skuId} /></td>
+                  <td><SkuTag id={p.sku?.code} /></td>
                   <td>{p.sku?.name}</td>
                   <td>+{p.qty}</td>
                   <td>{formatCurrency(p.unitPrice)}</td>
                   <td>{p.vendor}</td>
-                  <td>{p.invoiceNo}</td>
+                  <td>{p.invoiceNo || "—"}</td>
                   <td><Badge status={p.status} /></td>
                 </tr>
               ))}

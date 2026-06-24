@@ -84,7 +84,7 @@ export default function AdminPurchaseApprovals() {
                     <Badge status="Pending" />
                   </div>
                   <div className="grid grid-cols-4 gap-2 p-2.5 bg-bg rounded text-xs mb-2.5">
-                    <div><div className="text-muted mb-0.5">SKU</div><SkuTag id={p.skuId} /></div>
+                    <div><div className="text-muted mb-0.5">SKU</div><SkuTag id={p.sku?.code} /></div>
                     <div><div className="text-muted mb-0.5">Qty Received</div><strong>+{p.qty}</strong></div>
                     <div><div className="text-muted mb-0.5">Unit Price</div><strong>{formatCurrency(p.unitPrice)}</strong></div>
                     <div><div className="text-muted mb-0.5">Total Value</div><strong>{formatCurrency(p.qty * p.unitPrice)}</strong></div>
@@ -139,7 +139,7 @@ export default function AdminPurchaseApprovals() {
                     <tr key={p.id}>
                       <td className="text-xs text-muted">{p.id.slice(0, 12)}…</td>
                       <td>{formatDate(p.date)}</td>
-                      <td><SkuTag id={p.skuId} /></td>
+                      <td><SkuTag id={p.sku?.code} /></td>
                       <td>{p.sku?.name}</td>
                       <td>+{p.qty}</td>
                       <td>{p.vendor}</td>

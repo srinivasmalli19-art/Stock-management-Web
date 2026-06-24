@@ -93,7 +93,7 @@ export default function AdminRevokeApprovals() {
                     <Badge status="Revoke_Pending" />
                   </div>
                   <div className="grid grid-cols-3 gap-2 p-2.5 bg-bg rounded text-xs mb-2.5">
-                    <div><div className="text-muted mb-0.5">SKU</div><SkuTag id={rv.skuId} /></div>
+                    <div><div className="text-muted mb-0.5">SKU</div><SkuTag id={rv.skuCode} /></div>
                     <div><div className="text-muted mb-0.5">Item</div>{rv.skuName}</div>
                     <div><div className="text-muted mb-0.5">Qty to Revoke</div><strong>{rv.qty}</strong></div>
                   </div>
@@ -147,7 +147,7 @@ export default function AdminRevokeApprovals() {
                     <tr key={rv.id}>
                       <td className="text-xs text-muted">{rv.id.slice(0, 12)}…</td>
                       <td>{rv.engineerName}</td>
-                      <td><SkuTag id={rv.skuId} /></td>
+                      <td><SkuTag id={rv.skuCode} /></td>
                       <td>{rv.skuName}</td>
                       <td>{rv.qty}</td>
                       <td>{formatDate(rv.createdAt)}</td>

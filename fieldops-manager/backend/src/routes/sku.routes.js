@@ -11,7 +11,7 @@ router.use(authenticate);
 router.use(requireOrg);
 
 const createSchema = Joi.object({
-  id: Joi.string().pattern(/^SKU-\d+$/i).required(),
+  code: Joi.string().pattern(/^SKU-\d+$/i).required(),
   name: Joi.string().min(2).required(),
   lowStockAlert: Joi.number().integer().min(0).optional(),
 });

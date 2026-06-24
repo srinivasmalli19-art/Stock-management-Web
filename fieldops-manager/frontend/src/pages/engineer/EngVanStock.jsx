@@ -155,7 +155,7 @@ export default function EngVanStock() {
                 <tbody>
                   {stock.map((s) => (
                     <tr key={s.id}>
-                      <td><SkuTag id={s.skuId} /></td>
+                      <td><SkuTag id={s.sku?.code} /></td>
                       <td>{s.sku?.name}</td>
                       <td><strong>{s.qty}</strong></td>
                     </tr>
@@ -171,7 +171,7 @@ export default function EngVanStock() {
           <FormField label="SKU Item">
             <select className={selectClass} value={reqSkuId} onChange={(e) => setReqSkuId(e.target.value)}>
               {skus.map((s) => (
-                <option key={s.id} value={s.id}>{s.id} – {s.name}</option>
+                <option key={s.id} value={s.id}>{s.code} – {s.name}</option>
               ))}
             </select>
           </FormField>
@@ -197,7 +197,7 @@ export default function EngVanStock() {
               <tbody>
                 {requests.map((r) => (
                   <tr key={r.id}>
-                    <td><SkuTag id={r.skuId} /></td>
+                    <td><SkuTag id={r.sku?.code} /></td>
                     <td>{r.sku?.name}</td>
                     <td>{r.qty}</td>
                     <td>{formatDate(r.createdAt)}</td>
@@ -229,7 +229,7 @@ export default function EngVanStock() {
               <tbody>
                 {returnRequests.map((r) => (
                   <tr key={r.id}>
-                    <td><SkuTag id={r.skuId} /></td>
+                    <td><SkuTag id={r.sku?.code} /></td>
                     <td>{r.sku?.name}</td>
                     <td>{r.qty}</td>
                     <td>{formatDate(r.createdAt)}</td>

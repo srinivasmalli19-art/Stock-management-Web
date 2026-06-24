@@ -15,11 +15,16 @@ const createSchema = Joi.object({
   qty: Joi.number().integer().min(1).required(),
 });
 
+const resubmitSchema = Joi.object({
+  skuId: Joi.string().optional(),
+  qty: Joi.number().integer().min(1).optional(),
+});
+
 router.get("/", getRequests);
 router.post("/", authorize("Engineer"), validate(createSchema), createRequest);
 router.patch("/:id/approve", authorize("Store_Manager"), approveRequest);
 router.patch("/:id/reject", authorize("Store_Manager"), rejectRequest);
 router.post("/:id/revoke", authorize("Store_Manager"), submitRevoke);
-router.patch("/:id/resubmit", authorize("Engineer"), resubmitRequest);
+router.patch("/:id/resubmit", authorize("Engineer"), validate(resubmitSchema), resubmitRequest);
 
 module.exports = router;

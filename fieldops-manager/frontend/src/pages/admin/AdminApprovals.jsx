@@ -134,7 +134,7 @@ export default function AdminApprovals() {
                       {log.items.map((item) => (
                         <div key={item.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center px-3 py-2 border-b border-border text-xs last:border-b-0">
                           <div>
-                            <SkuTag id={item.skuId} />
+                            <SkuTag id={item.sku?.code} />
                             <span className="ml-2">{item.sku?.name} <span className="text-muted">× {item.qty}</span></span>
                           </div>
                           <div className="text-muted">{formatCurrency(item.saleValue)}</div>

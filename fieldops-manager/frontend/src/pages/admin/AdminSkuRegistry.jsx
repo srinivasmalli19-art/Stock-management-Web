@@ -13,7 +13,7 @@ import { PageSpinner } from "../../components/common/Spinner";
 export default function AdminSkuRegistry() {
   const queryClient = useQueryClient();
   const [editSku, setEditSku] = useState(null);
-  const [form, setForm] = useState({ id: "", name: "", lowStockAlert: "" });
+  const [form, setForm] = useState({ code: "", name: "", lowStockAlert: "" });
   const [editForm, setEditForm] = useState({ name: "", lowStockAlert: "" });
 
   const { data: skusRes, isLoading } = useQuery({
@@ -26,7 +26,7 @@ export default function AdminSkuRegistry() {
     onSuccess: () => {
       toast.success(`SKU registered!`);
       queryClient.invalidateQueries({ queryKey: ["skus"] });
-      setForm({ id: "", name: "", lowStockAlert: "" });
+      setForm({ code: "", name: "", lowStockAlert: "" });
     },
     onError: (err) => toast.error(err?.response?.data?.message || "Failed to register SKU"),
   });
@@ -42,8 +42,8 @@ export default function AdminSkuRegistry() {
   });
 
   const handleCreate = () => {
-    if (!form.id || !form.name) { toast.error("Enter SKU ID and name"); return; }
-    createMutation.mutate({ id: form.id, name: form.name, lowStockAlert: parseInt(form.lowStockAlert) || 0 });
+    if (!form.code || !form.name) { toast.error("Enter SKU ID and name"); return; }
+    createMutation.mutate({ code: form.code, name: form.name, lowStockAlert: parseInt(form.lowStockAlert) || 0 });
   };
 
   const openEdit = (sku) => {
@@ -67,7 +67,7 @@ export default function AdminSkuRegistry() {
         <Card>
           <CardTitle>Register New SKU</CardTitle>
           <FormField label="SKU ID">
-            <input type="text" className={inputClass} value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value.toUpperCase() })} placeholder="e.g. SKU-009" />
+            <input type="text" className={inputClass} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="e.g. SKU-009" />
           </FormField>
           <FormField label="Item Name">
             <input type="text" className={inputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Product name" />
@@ -91,7 +91,7 @@ export default function AdminSkuRegistry() {
               <tbody>
                 {skus.map((s) => (
                   <tr key={s.id}>
-                    <td><SkuTag id={s.id} /></td>
+                    <td><SkuTag id={s.code} /></td>
                     <td>{s.name}</td>
                     <td>{s.lowStockAlert}</td>
                     <td><strong>{s.qty}</strong></td>
@@ -109,9 +109,9 @@ export default function AdminSkuRegistry() {
         </Card>
       </div>
 
-      <Modal open={!!editSku} onClose={() => setEditSku(null)} title={`Modify SKU — ${editSku?.id}`}>
+      <Modal open={!!editSku} onClose={() => setEditSku(null)} title={`Modify SKU — ${editSku?.code}`}>
         <FormField label="SKU ID">
-          <input className={inputClass} value={editSku?.id || ""} disabled style={{ opacity: 0.6 }} />
+          <input className={inputClass} value={editSku?.code || ""} disabled style={{ opacity: 0.6 }} />
         </FormField>
         <FormField label="Item Name">
           <input type="text" className={inputClass} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
