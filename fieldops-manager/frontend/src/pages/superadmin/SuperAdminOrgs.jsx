@@ -52,7 +52,7 @@ export default function SuperAdminOrgs() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold flex items-center gap-2">
+          <h1 className="text-5xl font-extrabold text-text tracking-tight flex items-center gap-2">
             <i className="ti ti-building text-accent text-2xl" />
             Organisation Management
           </h1>

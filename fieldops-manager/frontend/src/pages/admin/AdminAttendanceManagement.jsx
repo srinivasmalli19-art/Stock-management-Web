@@ -14,7 +14,7 @@ export default function AdminAttendanceManagement() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-4xl font-bold text-text">Attendance Management</h1>
+        <h1 className="text-5xl font-extrabold text-text tracking-tight">Attendance Management</h1>
       </div>
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
       {tab === "register" && <AdminAttendance embedded />}

@@ -68,7 +68,7 @@ function ProfileMenu({ onChangePassword }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white text-[12px] font-bold cursor-pointer hover:bg-indigo-700 transition-colors shrink-0"
+        className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white text-[12px] font-bold cursor-pointer hover:shadow-card-md transition-all duration-150 shrink-0 shadow-sm"
         aria-label="Profile menu"
         aria-expanded={open}
         aria-haspopup="true"
@@ -77,27 +77,36 @@ function ProfileMenu({ onChangePassword }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-border rounded-xl shadow-lg z-50 overflow-hidden">
-          {/* User info */}
-          <div className="px-4 py-3 border-b border-border">
-            <div className="text-[13px] font-semibold text-text truncate">{currentUser?.name}</div>
-            <div className="text-[11px] text-muted">{ROLE_LABELS[currentUser?.role] || currentUser?.role}</div>
+        <div className="absolute right-0 top-full mt-2.5 w-60 bg-white border border-border rounded-3xl shadow-card-lg z-50 overflow-hidden">
+          {/* User info header */}
+          <div className="px-4 py-3.5 border-b border-border bg-bg/50">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white text-[12px] font-bold shrink-0">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[13px] font-bold text-text truncate">{currentUser?.name}</div>
+                <div className="text-[11px] text-muted font-semibold">{ROLE_LABELS[currentUser?.role] || currentUser?.role}</div>
+              </div>
+            </div>
           </div>
 
-          <button
-            onClick={() => { setOpen(false); onChangePassword(); }}
-            className="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] font-medium text-sidebar-text hover:bg-gray-50 hover:text-text transition-colors duration-100 cursor-pointer"
-          >
-            <i className="ti ti-lock text-[16px] text-muted" />
-            Change Password
-          </button>
-          <button
-            onClick={() => { setOpen(false); logout(); }}
-            className="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] font-medium text-sidebar-text hover:bg-red-50 hover:text-danger transition-colors duration-100 cursor-pointer"
-          >
-            <i className="ti ti-logout text-[16px] text-muted" />
-            Sign Out
-          </button>
+          <div className="p-1.5">
+            <button
+              onClick={() => { setOpen(false); onChangePassword(); }}
+              className="flex items-center gap-3 w-full px-3.5 py-2.5 text-[13px] font-semibold text-sidebar-text hover:bg-indigo-50 hover:text-accent rounded-2xl transition-colors duration-100 cursor-pointer"
+            >
+              <i className="ti ti-lock text-[17px]" />
+              Change Password
+            </button>
+            <button
+              onClick={() => { setOpen(false); logout(); }}
+              className="flex items-center gap-3 w-full px-3.5 py-2.5 text-[13px] font-semibold text-sidebar-text hover:bg-red-50 hover:text-danger rounded-2xl transition-colors duration-100 cursor-pointer"
+            >
+              <i className="ti ti-logout text-[17px]" />
+              Sign Out
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -118,7 +127,7 @@ export default function Topbar({ onMenuClick, onChangePassword }) {
         >
           <i className="ti ti-menu-2 text-xl" />
         </button>
-        <h1 className="text-[15px] font-semibold text-text truncate">{title}</h1>
+        <h1 className="text-[15px] font-bold text-text truncate tracking-tight">{title}</h1>
       </div>
 
       <div className="flex items-center gap-2 shrink-0">

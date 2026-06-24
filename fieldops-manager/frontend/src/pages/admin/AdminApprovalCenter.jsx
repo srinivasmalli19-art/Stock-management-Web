@@ -14,7 +14,7 @@ export default function AdminApprovalCenter() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-4xl font-bold text-text">Approval Center</h1>
+        <h1 className="text-5xl font-extrabold text-text tracking-tight">Approval Center</h1>
       </div>
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
       {tab === "productivity" && <AdminApprovals />}

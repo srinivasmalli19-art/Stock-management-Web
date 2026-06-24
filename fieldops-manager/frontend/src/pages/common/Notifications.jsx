@@ -87,7 +87,7 @@ export default function Notifications() {
     <div>
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-4xl font-bold">Notifications</h1>
+          <h1 className="text-5xl font-extrabold text-text tracking-tight">Notifications</h1>
           <p className="text-sm text-muted mt-0.5">Your activity feed across all workflows</p>
         </div>
         {unreadCount > 0 && (

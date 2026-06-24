@@ -104,7 +104,7 @@ export default function SuperAdminMonitoring() {
     <div>
       <div className="mb-5 flex items-start justify-between">
         <div>
-          <h1 className="text-4xl font-bold flex items-center gap-2">
+          <h1 className="text-5xl font-extrabold text-text tracking-tight flex items-center gap-2">
             <Activity size={20} className="text-purple-600" />
             System Monitoring
           </h1>

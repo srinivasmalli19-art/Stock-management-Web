@@ -128,7 +128,7 @@ export default function EngVanStock() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-4xl font-bold text-text">My Van Stock</h1>
+        <h1 className="text-5xl font-extrabold text-text tracking-tight">My Van Stock</h1>
         <div className="flex items-center gap-2">
           {vanSkus.length > 0 && (
             <Button size="sm" variant="warn" onClick={openReturn}>

@@ -54,7 +54,7 @@ export default function StoreReturnRequests() {
     <div>
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-4xl font-bold text-text">Return Stock Requests</h1>
+          <h1 className="text-5xl font-extrabold text-text tracking-tight">Return Stock Requests</h1>
           {pendingCount > 0 && (
             <p className="text-sm text-warn font-semibold mt-0.5">{pendingCount} pending review</p>
           )}

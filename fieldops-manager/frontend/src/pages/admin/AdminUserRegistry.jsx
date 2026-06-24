@@ -131,7 +131,7 @@ export default function AdminUserRegistry() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-4xl font-bold">User Registry</h1>
+        <h1 className="text-5xl font-extrabold text-text tracking-tight">User Registry</h1>
         <p className="text-sm text-muted mt-0.5">Manage all users in your organisation</p>
       </div>
 

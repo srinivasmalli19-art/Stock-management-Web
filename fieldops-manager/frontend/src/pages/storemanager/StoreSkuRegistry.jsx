@@ -39,7 +39,7 @@ export default function StoreSkuRegistry() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-4xl font-bold text-text">SKU Registry</h1>
+        <h1 className="text-5xl font-extrabold text-text tracking-tight">SKU Registry</h1>
         <p className="text-sm text-muted mt-0.5">Register new SKUs. Admin can edit existing entries.</p>
       </div>
 

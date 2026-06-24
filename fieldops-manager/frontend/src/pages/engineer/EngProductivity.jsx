@@ -155,7 +155,7 @@ export default function EngProductivity() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-4xl font-bold text-text">Productivity & Attendance</h1>
+        <h1 className="text-5xl font-extrabold text-text tracking-tight">Productivity & Attendance</h1>
       </div>
 
       {/* Tabs */}

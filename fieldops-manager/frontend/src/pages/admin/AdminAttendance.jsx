@@ -96,7 +96,7 @@ export default function AdminAttendance({ embedded = false }) {
       <div className="flex items-center justify-between mb-5">
         {!embedded ? (
           <div>
-            <h1 className="text-4xl font-bold text-text">Consolidated Attendance Register</h1>
+            <h1 className="text-5xl font-extrabold text-text tracking-tight">Consolidated Attendance Register</h1>
             {summary.length > 0 && (
               <p className="text-sm text-muted mt-0.5">
                 {formatMonth(prefix)} · Overall {overallPct}% attendance
