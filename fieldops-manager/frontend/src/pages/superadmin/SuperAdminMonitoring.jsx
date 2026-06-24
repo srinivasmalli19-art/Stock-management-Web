@@ -67,12 +67,12 @@ const StatTile = ({ icon: Icon, label, value, sub, color = "accent" }) => {
   };
   return (
     <div className={`rounded-xl border p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${colors[color] || colors.accent}`}>
-      <div className="flex items-center gap-2 mb-2.5">
+      <div className="flex items-center gap-2 mb-3">
         <Icon size={16} />
         <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
       </div>
-      <div className="text-3xl font-bold leading-none">{value ?? "—"}</div>
-      {sub && <div className="text-xs opacity-60 mt-1.5">{sub}</div>}
+      <div className="text-4xl font-extrabold leading-none">{value ?? "—"}</div>
+      {sub && <div className="text-xs opacity-60 mt-2 font-medium">{sub}</div>}
     </div>
   );
 };

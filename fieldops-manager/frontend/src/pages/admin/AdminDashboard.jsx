@@ -31,12 +31,12 @@ const StatTile = ({ icon: Icon, label, value, sub, color = "accent", to }) => {
   };
   const inner = (
     <div className={`rounded-xl border p-4 transition-all duration-200 ${colors[color] || colors.accent} ${to ? "hover:shadow-lg hover:-translate-y-0.5 cursor-pointer" : ""}`}>
-      <div className="flex items-center gap-2 mb-2.5">
+      <div className="flex items-center gap-2 mb-3">
         <Icon size={16} />
         <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
       </div>
-      <div className="text-3xl font-bold leading-none">{value}</div>
-      {sub && <div className="text-xs mt-1.5 opacity-70">{sub}</div>}
+      <div className="text-4xl font-extrabold leading-none">{value}</div>
+      {sub && <div className="text-xs mt-2 font-medium opacity-70">{sub}</div>}
       {to && <div className="text-[10px] mt-2.5 font-semibold opacity-60 flex items-center gap-0.5">Review <i className="ti ti-arrow-right text-[11px]" /></div>}
     </div>
   );

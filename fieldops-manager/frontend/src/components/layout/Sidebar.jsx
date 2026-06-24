@@ -45,7 +45,7 @@ export default function Sidebar({ isMobileOpen, onClose }) {
             return (
               <div
                 key={`section-${idx}`}
-                className="px-3 pt-5 pb-1.5 text-[10px] font-extrabold text-muted/50 uppercase tracking-[0.12em] first:pt-2"
+                className="px-3 pt-6 pb-2 text-[12px] font-extrabold text-muted/80 uppercase tracking-[0.12em] first:pt-2"
               >
                 {item.section}
               </div>
@@ -57,7 +57,7 @@ export default function Sidebar({ isMobileOpen, onClose }) {
               to={item.page}
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-semibold transition-all duration-150 group relative ${
+                `flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[15px] font-bold tracking-[-0.01em] leading-6 transition-all duration-150 group relative ${
                   isActive
                     ? "bg-accent text-white shadow-sm"
                     : "text-sidebar-text hover:bg-gray-100 hover:text-text"
@@ -66,7 +66,7 @@ export default function Sidebar({ isMobileOpen, onClose }) {
             >
               {({ isActive }) => (
                 <>
-                  <i className={`ti ${item.icon} text-[19px] transition-colors shrink-0 ${isActive ? "text-white/90" : "text-muted group-hover:text-accent"}`} />
+                  <i className={`ti ${item.icon} text-[20px] transition-colors shrink-0 leading-none ${isActive ? "text-white" : "text-muted group-hover:text-accent"}`} />
                   <span className="truncate">{item.label}</span>
                 </>
               )}
@@ -77,13 +77,13 @@ export default function Sidebar({ isMobileOpen, onClose }) {
 
       {/* ── User identity ─────────────────────────────────────────────────────── */}
       <div className="px-4 pb-4 border-t border-sidebar-border pt-3.5 shrink-0">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-2xl bg-gray-50 border border-border">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white text-[12px] font-bold shrink-0 shadow-sm">
+        <div className="flex items-center gap-3 px-3 py-3 rounded-2xl bg-gray-50 border border-border">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white text-[13px] font-bold shrink-0 shadow-sm">
             {initials}
           </div>
           <div className="min-w-0">
-            <div className="text-[12px] font-bold text-text truncate leading-tight">{currentUser?.name}</div>
-            <div className="text-[10px] text-muted font-semibold">{ROLE_LABELS[currentUser?.role] || currentUser?.role}</div>
+            <div className="text-[15px] font-bold text-text truncate leading-tight">{currentUser?.name}</div>
+            <div className="text-[13px] text-muted font-medium leading-tight mt-0.5">{ROLE_LABELS[currentUser?.role] || currentUser?.role}</div>
           </div>
         </div>
       </div>

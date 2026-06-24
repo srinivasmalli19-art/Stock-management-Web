@@ -9,16 +9,16 @@ export default function MetricCard({ label, value, sub, color = "accent", icon }
   const cfg = colorMap[color] || colorMap.accent;
   return (
     <div className={`bg-white rounded-3xl shadow-card border border-border ring-1 ${cfg.ring} p-5 transition-all duration-200 hover:shadow-card-md hover:-translate-y-1`}>
-      <div className="flex items-start justify-between mb-3">
-        <div className="text-[10px] font-bold text-muted uppercase tracking-[0.09em] leading-tight pr-2">{label}</div>
+      <div className="flex items-start justify-between mb-4">
+        <div className="text-[11px] font-semibold text-muted uppercase tracking-[0.08em] leading-tight pr-2">{label}</div>
         {icon && (
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${cfg.iconBg}`}>
-            <i className={`ti ${icon} text-[18px] ${cfg.iconFg}`} />
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${cfg.iconBg}`}>
+            <i className={`ti ${icon} text-[19px] ${cfg.iconFg}`} />
           </div>
         )}
       </div>
-      <div className={`text-3xl font-extrabold leading-none tracking-tight ${cfg.val}`}>{value}</div>
-      {sub && <div className="text-xs text-muted mt-2 font-medium">{sub}</div>}
+      <div className={`text-4xl font-extrabold leading-none tracking-tight ${cfg.val}`}>{value}</div>
+      {sub && <div className="text-xs text-muted mt-2.5 font-medium">{sub}</div>}
     </div>
   );
 }
