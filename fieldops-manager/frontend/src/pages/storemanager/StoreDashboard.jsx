@@ -74,13 +74,13 @@ export default function StoreDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-        <MetricCard label="Pending Stock Requests" value={pendingStockRequests} color="accent" />
-        <MetricCard label="Purchase Inward (Pending Admin)" value={pendingPurchaseInward} color="amber" />
-        <MetricCard label="Low Stock SKUs" value={lowStockSkus.length} color="red" />
-        <MetricCard label="Total Inventory Value" value={formatCurrency(totalInventoryValue)} color="green" />
+        <MetricCard label="Pending Stock Requests" value={pendingStockRequests} color="accent" icon="ti-package" />
+        <MetricCard label="Purchase Inward (Pending Admin)" value={pendingPurchaseInward} color="amber" icon="ti-truck-delivery" />
+        <MetricCard label="Low Stock SKUs" value={lowStockSkus.length} color="red" icon="ti-alert-triangle" />
+        <MetricCard label="Total Inventory Value" value={formatCurrency(totalInventoryValue)} color="green" icon="ti-currency-rupee" />
       </div>
       <div className="grid grid-cols-1 gap-3 mb-5">
-        <MetricCard label="Claims Pending Validation" value={pendingClaims} sub={pendingClaims > 0 ? "LP claims awaiting your review" : "no claims pending"} color={pendingClaims > 0 ? "red" : "green"} />
+        <MetricCard label="Claims Pending Validation" value={pendingClaims} sub={pendingClaims > 0 ? "LP claims awaiting your review" : "no claims pending"} color={pendingClaims > 0 ? "red" : "green"} icon="ti-receipt" />
       </div>
 
       {pendingPurchaseInward > 0 && (

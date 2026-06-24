@@ -23,7 +23,7 @@ const QUICK_ACTIONS = [
   { label: "Log Productivity", icon: "ti-clipboard-plus", to: "/engineer/productivity" },
   { label: "Request Stock",    icon: "ti-package-export", to: "/engineer/stock"        },
   { label: "Van Stock",        icon: "ti-truck",          to: "/engineer/stock"        },
-  { label: "Approval Status",  icon: "ti-check-list",     to: "/engineer/status"       },
+  { label: "My Logs",          icon: "ti-check-list",     to: "/engineer/productivity" },
 ];
 
 export default function EngDashboard() {
@@ -96,14 +96,14 @@ export default function EngDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-        <MetricCard label="Calls Closed (MTD)" value={callsClosed} color="accent" />
-        <MetricCard label="Revenue (MTD)" value={formatCurrency(revenue)} color="green" />
-        <MetricCard label="Days Present" value={daysPresent} color="amber" />
-        <MetricCard label="Incentive Earned" value={formatCurrency(incentive)} color="red" />
+        <MetricCard label="Calls Closed (MTD)" value={callsClosed} color="accent" icon="ti-phone-call" />
+        <MetricCard label="Revenue (MTD)" value={formatCurrency(revenue)} color="green" icon="ti-currency-rupee" />
+        <MetricCard label="Days Present" value={daysPresent} color="amber" icon="ti-calendar-check" />
+        <MetricCard label="Incentive Earned" value={formatCurrency(incentive)} color="red" icon="ti-star" />
       </div>
       <div className="grid grid-cols-2 gap-3 mb-5">
-        <MetricCard label="Van Stock Items" value={stockItems} sub="SKUs currently allocated" color="accent" />
-        <MetricCard label="Pending Stock Requests" value={pendingReqs} sub={pendingReqs > 0 ? "awaiting store approval" : "all fulfilled"} color={pendingReqs > 0 ? "amber" : "green"} />
+        <MetricCard label="Van Stock Items" value={stockItems} sub="SKUs currently allocated" color="accent" icon="ti-truck" />
+        <MetricCard label="Pending Stock Requests" value={pendingReqs} sub={pendingReqs > 0 ? "awaiting store approval" : "all fulfilled"} color={pendingReqs > 0 ? "amber" : "green"} icon="ti-package" />
       </div>
 
       {/* Phase E widgets */}

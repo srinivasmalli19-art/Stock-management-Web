@@ -17,7 +17,7 @@ import { formatCurrency, formatMonth, getCurrentMonthPrefix } from "../../utils/
 const QUICK_ACTIONS = [
   { label: "User Management",      icon: "ti-users",            to: "/admin/users"                },
   { label: "LP Approvals",         icon: "ti-receipt",          to: "/admin/lp-approvals"         },
-  { label: "Attendance Approvals", icon: "ti-calendar-check",   to: "/admin/attendance-approval"  },
+  { label: "Approval Center",      icon: "ti-check-square",     to: "/admin/approval-center"      },
   { label: "Audit Logs",           icon: "ti-clipboard-list",   to: "/admin/audit-logs"           },
 ];
 
@@ -108,12 +108,12 @@ export default function AdminDashboard() {
   const today = w.today || {};
 
   const pendingItems = [
-    { label: "Productivity Approvals",  count: pending.productivity || 0, to: "/admin/approvals",            color: "amber"  },
+    { label: "Productivity Approvals",  count: pending.productivity || 0, to: "/admin/approval-center",      color: "amber"  },
     { label: "Purchase Inward",         count: pending.purchase     || 0, to: "/admin/purchase-approvals",   color: "accent" },
     { label: "Revoke Requests",         count: pending.revoke       || 0, to: "/admin/revoke-approvals",     color: "amber"  },
     { label: "LP Requests",             count: pending.lp           || 0, to: "/admin/lp-approvals",         color: "purple" },
     { label: "Claims",                  count: pending.claims       || 0, to: "/admin/lp-approvals",         color: "red"    },
-    { label: "Staff Attendance",        count: pending.attendance   || 0, to: "/admin/attendance-approval",  color: "accent" },
+    { label: "Staff Attendance",        count: pending.attendance   || 0, to: "/admin/approval-center",      color: "accent" },
   ];
 
   const todayStats = [
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
       <div className="mb-2">
         <div className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Pending Actions</div>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
-          <StatTile icon={ClipboardCheck} label="Productivity" value={pendingProductivity} sub="awaiting approval" color={pendingProductivity > 0 ? "amber" : "green"} to="/admin/approvals" />
+          <StatTile icon={ClipboardCheck} label="Productivity" value={pendingProductivity} sub="awaiting approval" color={pendingProductivity > 0 ? "amber" : "green"} to="/admin/approval-center" />
           <StatTile icon={Package} label="Purchase Inward" value={pendingPurchase} sub="awaiting approval" color={pendingPurchase > 0 ? "amber" : "green"} to="/admin/purchase-approvals" />
           <StatTile icon={RotateCcw} label="Revoke Requests" value={pendingRevoke} sub="awaiting review" color={pendingRevoke > 0 ? "amber" : "green"} to="/admin/revoke-approvals" />
           <StatTile icon={Receipt} label="LP Requests" value={pendingLP} sub="awaiting approval" color={pendingLP > 0 ? "purple" : "green"} to="/admin/lp-approvals" />

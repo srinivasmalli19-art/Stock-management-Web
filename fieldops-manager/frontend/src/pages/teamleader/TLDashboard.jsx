@@ -108,19 +108,19 @@ export default function TLDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
-        <MetricCard label="Team Calls (MTD)" value={totals.calls} color="accent" />
-        <MetricCard label="Team Revenue (MTD)" value={formatCurrency(totals.revenue)} color="green" />
-        <MetricCard label="Total Incentive Paid" value={formatCurrency(totals.incentive)} color="amber" />
+        <MetricCard label="Team Calls (MTD)" value={totals.calls} color="accent" icon="ti-phone-call" />
+        <MetricCard label="Team Revenue (MTD)" value={formatCurrency(totals.revenue)} color="green" icon="ti-currency-rupee" />
+        <MetricCard label="Total Incentive Paid" value={formatCurrency(totals.incentive)} color="amber" icon="ti-star" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        <Link to="/tl/approvals" className="block hover:shadow-md transition-shadow rounded-lg">
-          <MetricCard label="Pending Validations" value={pendingValidations} sub={pendingValidations > 0 ? "tap to review →" : "all caught up"} color={pendingValidations > 0 ? "red" : "green"} />
+        <Link to="/tl/approvals" className="block hover:shadow-md transition-shadow rounded-3xl">
+          <MetricCard label="Pending Validations" value={pendingValidations} sub={pendingValidations > 0 ? "tap to review →" : "all caught up"} color={pendingValidations > 0 ? "red" : "green"} icon="ti-check-list" />
         </Link>
-        <Link to="/tl/lp-requests" className="block hover:shadow-md transition-shadow rounded-lg">
-          <MetricCard label="LP Requests" value={lpList.length} sub={pendingLP > 0 ? "tap to review →" : `${pendingLP} awaiting Admin`} color={pendingLP > 0 ? "amber" : "accent"} />
+        <Link to="/tl/lp-requests" className="block hover:shadow-md transition-shadow rounded-3xl">
+          <MetricCard label="LP Requests" value={lpList.length} sub={pendingLP > 0 ? "tap to review →" : `${pendingLP} awaiting Admin`} color={pendingLP > 0 ? "amber" : "accent"} icon="ti-receipt" />
         </Link>
-        <Link to="/tl/lp-requests" className="block hover:shadow-md transition-shadow rounded-lg">
-          <MetricCard label="Active Claims" value={activeClaims} sub={activeClaims > 0 ? "tap to review →" : "none in progress"} color={activeClaims > 0 ? "amber" : "green"} />
+        <Link to="/tl/lp-requests" className="block hover:shadow-md transition-shadow rounded-3xl">
+          <MetricCard label="Active Claims" value={activeClaims} sub={activeClaims > 0 ? "tap to review →" : "none in progress"} color={activeClaims > 0 ? "amber" : "green"} icon="ti-file-dollar" />
         </Link>
       </div>
 
