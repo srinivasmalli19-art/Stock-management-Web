@@ -54,7 +54,9 @@ let api;
 let apiUrl;
 
 async function accessToken(claims, { audience = "stock-admin", signWith } = {}) {
-  return new SignJWT({ email_verified: true, ...claims })
+  // Like Keycloak: azp is the app the token was issued to.
+  const azp = Array.isArray(audience) ? audience[0] : audience;
+  return new SignJWT({ email_verified: true, azp, ...claims })
     .setProtectedHeader({ alg: "RS256", kid: jwk.kid })
     .setIssuer(issuer)
     .setAudience(audience)
@@ -171,7 +173,12 @@ test("rejects tokens for another app, forged tokens and garbage", async () => {
   const other = await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["manager"] }, { audience: "pasumithra-admin" });
   const { privateKey } = await generateKeyPair("RS256");
   const forged = await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["manager"] }, { signWith: privateKey });
-  for (const token of [other, forged, "x".repeat(40)]) {
+  // Issued to Pasumithra, but its audience also lists Stock Management.
+  const replayed = await accessToken(
+    { sub: "kc-admin", email: "admin@slc.test", roles: ["super_admin"], azp: "pasumithra-admin" },
+    { audience: ["pasumithra-admin", "stock-admin"] },
+  );
+  for (const token of [other, forged, replayed, "x".repeat(40)]) {
     assert.equal((await post("/api/auth/sso", { accessToken: token })).status, 401);
   }
 });

@@ -46,6 +46,9 @@ function createSsoVerifier({ issuerUrl, clientId, fetchImpl = fetch }) {
   async function verifyAccessToken(token) {
     await init();
     const { payload } = await jwtVerify(token, jwks, { issuer, audience: clientId });
+    // Must have been issued TO this app (authorized party), not merely list it
+    // in `aud`: a token from another SLC app could otherwise be replayed here.
+    if (payload.azp !== clientId) throw new Error("Token was issued to another app");
     if (typeof payload.sub !== "string") throw new Error("Token has no subject");
     return payload;
   }
