@@ -5,6 +5,9 @@ const { success, error } = require("../utils/responseHelper");
 const asyncHandler = require("../utils/asyncHandler");
 const { writeAudit } = require("../utils/auditService");
 const { writeNotification } = require("../utils/notificationService");
+const env = require("../config/env");
+
+const ADMIN_ROLES = ["Super_Admin", "Admin"];
 
 // sameSite "none" required for cross-domain cookie (frontend and backend on different domains)
 // secure must be true when sameSite is "none"
@@ -24,6 +27,11 @@ const login = asyncHandler(async (req, res) => {
 
   const valid = await comparePassword(password, user.passwordHash);
   if (!valid) return error(res, "Invalid credentials", 401);
+
+  // Once SLC sign-in is enforced, admins must use their SLC Account (MFA, central control).
+  if (env.SSO_ENFORCE_FOR_ADMINS && env.SSO_ISSUER_URL && ADMIN_ROLES.includes(user.role)) {
+    return error(res, "Admins sign in with their SLC Account. Use the \"Sign in with SLC Account\" button.", 403);
+  }
 
   if (user.orgId && !user.org?.isActive) {
     return error(res, "Your organisation has been deactivated. Contact your Super Admin.", 403);

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { completeSlcSignIn, endSlcSessionIfAny } from "../auth/slcSignIn";
 
 const AuthContext = createContext(null);
 
@@ -66,6 +67,23 @@ export function AuthProvider({ children }) {
     return user;
   }, [navigate]);
 
+  /** Store a session returned by the backend and go to the role's home page. */
+  const startSession = useCallback((accessToken, user) => {
+    localStorage.setItem("accessToken", accessToken);
+    api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+    flushSync(() => {
+      setCurrentUser(user);
+    });
+    navigate(ROLE_DEFAULT_ROUTES[user.role] || "/", { replace: true });
+    return user;
+  }, [navigate]);
+
+  /** Finish "Sign in with SLC Account" (called by /sso/callback). */
+  const completeSsoLogin = useCallback(async () => {
+    const { accessToken, user } = await completeSlcSignIn();
+    return startSession(accessToken, user);
+  }, [startSession]);
+
   const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout");
@@ -73,11 +91,13 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("accessToken");
     delete api.defaults.headers.common["Authorization"];
     setCurrentUser(null);
+    // SLC sign-in sessions also end the shared SLC session (redirects away).
+    if (await endSlcSessionIfAny()) return;
     navigate("/login");
   }, [navigate]);
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, login, logout }}>
+    <AuthContext.Provider value={{ currentUser, loading, login, logout, completeSsoLogin }}>
       {children}
     </AuthContext.Provider>
   );

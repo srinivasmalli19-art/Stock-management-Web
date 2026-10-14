@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
+import { getSsoConfig, startSlcSignIn } from "../../auth/slcSignIn";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -15,6 +16,23 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState(null);
+  const [sso, setSso] = useState(null);
+  const [ssoStarting, setSsoStarting] = useState(false);
+
+  useEffect(() => {
+    getSsoConfig().then(setSso);
+  }, []);
+
+  const onSlcSignIn = async () => {
+    setLoginError(null);
+    setSsoStarting(true);
+    try {
+      await startSlcSignIn();
+    } catch {
+      setLoginError("SLC sign-in is unavailable right now. Please try again.");
+      setSsoStarting(false);
+    }
+  };
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -55,6 +73,26 @@ export default function LoginPage() {
             <h1 className="text-3xl font-extrabold text-text tracking-tight">LogiTask</h1>
             <p className="text-sm text-muted mt-1.5 font-medium">Field Operations Management</p>
           </div>
+
+          {sso && (
+            <div className="mb-6">
+              <button
+                type="button"
+                onClick={onSlcSignIn}
+                disabled={ssoStarting}
+                className="w-full flex items-center justify-center gap-2.5 bg-white border-2 border-indigo-600 text-indigo-700 py-3 rounded-2xl font-bold text-[15px] hover:bg-indigo-50 transition-all duration-200 disabled:opacity-60 cursor-pointer"
+              >
+                <i className="ti ti-shield-lock text-[18px]" />
+                {ssoStarting ? "Opening SLC sign-in…" : `Sign in with ${sso.providerName}`}
+              </button>
+              <p className="text-center text-xs text-muted mt-2 font-medium">For Super Admins and Admins</p>
+              <div className="flex items-center gap-3 mt-6 text-[11px] font-bold text-muted uppercase tracking-[0.08em]">
+                <span className="flex-1 h-px bg-border" />
+                {sso.enforcedForAdmins ? "Field staff" : "Or with email"}
+                <span className="flex-1 h-px bg-border" />
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
             {/* Email */}

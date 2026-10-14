@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import AppShell from "./components/layout/AppShell";
 import LoginPage from "./pages/auth/LoginPage";
+import SsoCallbackPage from "./pages/auth/SsoCallbackPage";
 
 // Engineer
 import EngDashboard from "./pages/engineer/EngDashboard";
@@ -66,6 +67,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/sso/callback" element={<SsoCallbackPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>

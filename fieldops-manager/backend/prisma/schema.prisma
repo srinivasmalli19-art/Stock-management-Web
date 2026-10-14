@@ -82,6 +82,8 @@ model User {
   name         String
   email        String   @unique
   passwordHash String
+  /// Subject (`sub`) of the linked SLC Account in the central identity provider.
+  ssoSubject   String?  @unique
   role         Role     @default(Engineer)
   isActive     Boolean  @default(true)
   // orgId is nullable: Super_Admin has global access (orgId = null)
@@ -460,5 +462,9 @@ model RefreshToken {
   token     String   @unique
   expiresAt DateTime
   isRevoked Boolean  @default(false)
+  /// SLC (Keycloak) session id for SSO sign-ins; used by back-channel logout.
+  ssoSid    String?
   createdAt DateTime @default(now())
+
+  @@index([ssoSid])
 }
