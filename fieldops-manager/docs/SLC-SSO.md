@@ -17,7 +17,7 @@ Store managers, team leaders and engineers keep their email + password.
    | SLC role (`stock-admin` client) | May sign in to a local account with role |
    | --- | --- |
    | `super_admin` | Super_Admin or Admin |
-   | `admin` | Admin |
+   | `manager` | Admin |
    | `viewer` or none | none (no read-only role exists in this app yet) |
 
 5. The person must already have an account in Stock Management, so organisations

@@ -17,7 +17,9 @@ const BACKCHANNEL_LOGOUT_EVENT = "http://schemas.openid.net/event/backchannel-lo
  */
 const SSO_ROLE_GRANTS = {
   super_admin: ["Super_Admin", "Admin"],
-  admin: ["Admin"],
+  // Named "manager", not "admin": Keycloak refuses to let SLC Central Admin
+  // grant a client role called "admin" (it clashes with Keycloak's own role).
+  manager: ["Admin"],
 };
 
 function allowedLocalRoles(ssoRoles) {

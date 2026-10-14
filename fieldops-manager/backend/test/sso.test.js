@@ -142,23 +142,23 @@ test("a Super Admin signs in, is linked by verified email and gets the app's own
 });
 
 test("an org Admin keeps their organisation", async () => {
-  const res = await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["admin"] }) });
+  const res = await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["manager"] }) });
   assert.equal(res.status, 200);
   assert.equal((await res.json()).data.user.orgId, "org1");
 });
 
-test("SLC 'admin' role cannot open a Super_Admin account", async () => {
+test("SLC 'manager' role cannot open a Super_Admin account", async () => {
   db.users.find((u) => u.id === "sa").ssoSubject = null;
-  const res = await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-owner", email: "owner@slc.test", roles: ["admin"] }) });
+  const res = await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-owner", email: "owner@slc.test", roles: ["manager"] }) });
   assert.equal(res.status, 403);
 });
 
 test("rejects: no admin role, unknown account, field roles, closed org, unverified email", async () => {
   const cases = [
     [{ sub: "x1", email: "admin@slc.test", roles: ["viewer"] }, 403],
-    [{ sub: "x2", email: "nobody@slc.test", roles: ["admin"] }, 403],
-    [{ sub: "x3", email: "eng@slc.test", roles: ["admin"] }, 403],
-    [{ sub: "x4", email: "admin2@slc.test", roles: ["admin"] }, 403],
+    [{ sub: "x2", email: "nobody@slc.test", roles: ["manager"] }, 403],
+    [{ sub: "x3", email: "eng@slc.test", roles: ["manager"] }, 403],
+    [{ sub: "x4", email: "admin2@slc.test", roles: ["manager"] }, 403],
     [{ sub: "x5", email: "owner@slc.test", roles: ["super_admin"], email_verified: false }, 403],
   ];
   for (const [claims, status] of cases) {
@@ -168,16 +168,16 @@ test("rejects: no admin role, unknown account, field roles, closed org, unverifi
 });
 
 test("rejects tokens for another app, forged tokens and garbage", async () => {
-  const other = await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["admin"] }, { audience: "pasumithra-admin" });
+  const other = await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["manager"] }, { audience: "pasumithra-admin" });
   const { privateKey } = await generateKeyPair("RS256");
-  const forged = await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["admin"] }, { signWith: privateKey });
+  const forged = await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["manager"] }, { signWith: privateKey });
   for (const token of [other, forged, "x".repeat(40)]) {
     assert.equal((await post("/api/auth/sso", { accessToken: token })).status, 401);
   }
 });
 
 test("central sign-out revokes this app's refresh tokens for that session", async () => {
-  await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["admin"], sid: "s-admin" }) });
+  await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["manager"], sid: "s-admin" }) });
   const row = db.refreshTokens.find((r) => r.ssoSid === "s-admin");
   assert.equal(row.isRevoked, false);
 
@@ -191,8 +191,8 @@ test("central sign-out revokes this app's refresh tokens for that session", asyn
 });
 
 test("logout by subject revokes every SSO session of that person", async () => {
-  await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["admin"], sid: "s-a" }) });
-  await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["admin"], sid: "s-b" }) });
+  await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["manager"], sid: "s-a" }) });
+  await post("/api/auth/sso", { accessToken: await accessToken({ sub: "kc-admin", email: "admin@slc.test", roles: ["manager"], sid: "s-b" }) });
   const res = await post("/api/auth/sso/backchannel-logout", { logout_token: await logoutToken({ sub: "kc-admin" }) }, "form");
   assert.equal(res.status, 200);
   assert.ok(db.refreshTokens.filter((r) => r.userId === "ad").every((r) => r.isRevoked));
