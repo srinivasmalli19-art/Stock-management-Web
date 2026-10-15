@@ -55,7 +55,7 @@ realm file).
 ## Rollout
 
 1. Deploy with `SSO_ISSUER_URL` set and `SSO_ENFORCE_FOR_ADMINS=false`.
-2. In SLC Central Admin → Admin access, give each admin `stock-admin: admin` (or
+2. In SLC Central Admin → Admin access, give each admin `stock-admin: manager` (or
    `super_admin`). Each signs in once with SLC to link their account.
 3. Set `SSO_ENFORCE_FOR_ADMINS=true`.
 
